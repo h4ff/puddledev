@@ -1842,24 +1842,35 @@
             updateLandscapeScrollHints();
         });
     }
-    // v1.0.2: old smart-TV browsers may parse the app but not support the
-    // individual CSS `translate` property. Fall back to the proven left/top path.
+    // v1.0.3: modern browsers retain the compositor-friendly individual
+    // `translate` path. TV browsers use a classic transform string instead of
+    // layout-heavy left/top animation, which is markedly smoother on older webOS.
     const supportsIndividualTranslate = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("translate", "1px 1px");
 
     function setWorldPosition(element, xPct, yPct) {
         var _a, _b;
         const xPx = pctToWorldX(xPct);
         const yPx = pctToWorldY(yPct);
-        // v0.162: pond ducks use compositor-friendly translate positioning once
-        // they are in the water. Entry ducks still use left/top because the pier
-        // choreography anchors their zero-size wrapper at the feet. Keeping pond
-        // position in the individual `translate` property lets the existing
-        // bob/scale/rotation `transform` continue independently.
-        if (supportsIndividualTranslate && ((_a = element === null || element === void 0 ? void 0 : element.classList) === null || _a === void 0 ? void 0 : _a.contains("duck")) && !element.classList.contains("entrying")) {
+        const isDuck = !!((_a = element === null || element === void 0 ? void 0 : element.classList) === null || _a === void 0 ? void 0 : _a.contains("duck"));
+
+        // Entry choreography still needs its foot-anchored left/top wrapper.
+        if (isDuck && !element.classList.contains("entrying") && TV_BROWSER) {
+            element.style.left = "0px";
+            element.style.top = "0px";
+            element.style.removeProperty("translate");
+            element._usesPondTranslate = false;
+            element._usesTvTransform = true;
+            element.style.transform = `translate3d(${xPx}px, ${yPx}px, 0) translate(-50%, -50%) scale(var(--duck-scale))`;
+            return;
+        }
+
+        if (supportsIndividualTranslate && isDuck && !element.classList.contains("entrying")) {
             if (!element._usesPondTranslate) {
                 element.style.left = "0px";
                 element.style.top = "0px";
                 element.style.removeProperty("translate");
+                element.style.removeProperty("transform");
+                element._usesTvTransform = false;
                 element._usesPondTranslate = true;
             }
             element.style.translate = `${xPx}px ${yPx}px`;
@@ -1869,6 +1880,10 @@
             if (element._usesPondTranslate) {
                 element.style.removeProperty("translate");
                 element._usesPondTranslate = false;
+            }
+            if (element._usesTvTransform) {
+                element.style.removeProperty("transform");
+                element._usesTvTransform = false;
             }
         }
         element.style.left = `${xPx}px`;
@@ -3054,6 +3069,8 @@
         return now - Number(collisionPairs.get(key) || 0) >= 9000;
     }
     function fightEligibleDuck(duck) {
+        if (TV_BROWSER)
+            return false;
         if (!(duck === null || duck === void 0 ? void 0 : duck.isConnected) || duck.dataset.motionState !== "floating")
             return false;
         if (duck.dataset.reacting === "true" || duck.dataset.fightActive === "true")
@@ -3067,6 +3084,8 @@
         return true;
     }
     function fightTapEligibleDuck(duck) {
+        if (TV_BROWSER)
+            return false;
         if (!(duck === null || duck === void 0 ? void 0 : duck.isConnected) || duck.dataset.motionState !== "floating")
             return false;
         if (duck.dataset.fightActive === "true")
@@ -4796,6 +4815,8 @@
         return animation.finished.catch(() => { }).then(() => gangnamSetPosition(xPct, yPct));
     }
     async function runGangnamEvent() {
+        if (TV_BROWSER)
+            return;
         const fallbackSongMs = 20500;
         const breakdownAtMs = 10450;
         const pierLassoHoldMs = 720;
@@ -4929,6 +4950,8 @@
         gangnamDoorHotspot.addEventListener("click", event => {
             event.preventDefault();
             event.stopPropagation();
+            if (TV_BROWSER)
+                return;
             const now = performance.now();
             const doubleTap = now - gangnamDoorTapAt <= 420;
             gangnamDoorTapAt = now;

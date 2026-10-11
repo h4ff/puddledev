@@ -2175,3 +2175,31 @@ body.tv-display-mode .tv-change-week:focus {
   outline: 4px solid white;
   outline-offset: 3px;
 }
+
+/* v1.0.3 smart-TV render path -------------------------------------------
+   Older webOS/Tizen engines are much happier when moving ducks use one
+   classic transform rather than per-frame left/top layout updates. */
+body.tv-browser .duck:not(.entrying) {
+  left: 0;
+  top: 0;
+  animation: none !important;
+  will-change: transform;
+}
+
+/* Keep the external prestige canvas aligned with the shifted 512x512 swim
+   artwork without relying on a percentage translate transform on old TVs. */
+body.tv-browser .prestige-swim-glints {
+  top: -27%;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  height: 100%;
+  transform: none;
+}
+
+/* Advanced interactive sequences depend on Web Animations/transforms that
+   older TV engines only partially implement. Hide their interaction target
+   rather than allowing a sequence to begin and abort midway. */
+body.tv-browser #gangnamDoorHotspot {
+  pointer-events: none;
+}
