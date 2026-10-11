@@ -1,4 +1,4 @@
-# Duck Pond — v1.0.0
+# Duck Pond — v1.0.1
 
 Duck Pond is the Taipans Cricket Club weekly duck animation. Player and duck data are loaded from CSV files and rendered as an interactive pond for desktop and mobile browsers.
 
@@ -39,3 +39,13 @@ The production build is suitable for static hosting on GitHub Pages. Treat every
 ## v1.0.0 release
 
 v1.0.0 is the production launch build promoted directly from the tested v0.183 release candidate. It includes the completed pre-release cleanup plus mobile portrait pond-scroll hints and the Facebook/Instagram in-app-browser landscape notice. No functional pond changes were made during the v1.0.0 promotion.
+
+
+## v1.0.1 compatibility release
+
+- Transpiles modern JavaScript syntax for older smart-TV browser engines.
+- Adds small DOM/JavaScript compatibility fallbacks required by older browsers.
+- Detects common smart-TV browsers and automatically enters a TV display mode after the selected week loads.
+- TV mode hides normal page chrome and leaves a remote-friendly **Change week** control to return to the selector.
+- The default remains the latest populated club week.
+- No duck, animation, asset, CSV or scoring behaviour changed from v1.0.0.

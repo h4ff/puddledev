@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none';">
-  <title>Taipans Duck Pond — v1.0.0</title>
-  <link rel="stylesheet" href="src/styles.css?v=1.0.0">
+  <title>Taipans Duck Pond — v1.0.1</title>
+  <link rel="stylesheet" href="src/styles.css?v=1.0.1">
 </head>
 <body>
   <main class="app-shell production-shell">
@@ -29,6 +29,7 @@
     </header>
 
     <section id="sceneFrame" class="scene-frame" aria-label="Interactive Taipan duck pond">
+      <button id="tvChangeWeek" class="tv-change-week" type="button" hidden>Change week</button>
       <div id="landscapeScrollHintLeft" class="landscape-scroll-hint landscape-scroll-hint-left" hidden aria-hidden="true">‹</div>
       <div id="landscapeScrollHintRight" class="landscape-scroll-hint landscape-scroll-hint-right" hidden aria-hidden="true">›</div>
       <div id="scene" class="scene-viewport">
@@ -113,6 +114,6 @@
     <div id="status" hidden aria-live="polite"></div>
   </main>
 
-  <script src="src/app.js?v=1.0.0"></script>
+  <script src="src/app.js?v=1.0.1"></script>
 </body>
 </html>
