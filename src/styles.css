@@ -2106,3 +2106,68 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .landscape-scroll-hint { animation: none; }
 }
+
+
+/* v1.0.1 smart-TV display mode ------------------------------------------- */
+.tv-change-week {
+  display: none;
+}
+
+body.tv-browser .production-shell {
+  width: 100%;
+  max-width: none;
+}
+
+body.tv-browser:not(.tv-display-mode) .production-week {
+  transform: scale(1.16);
+  transform-origin: center;
+}
+
+body.tv-browser:not(.tv-display-mode) .production-week select {
+  min-height: 48px;
+  font-size: 1.05rem;
+}
+
+body.tv-display-mode {
+  margin: 0;
+  overflow: hidden;
+}
+
+body.tv-display-mode .production-shell {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
+body.tv-display-mode .production-toolbar,
+body.tv-display-mode .facebook-browser-notice {
+  display: none !important;
+}
+
+body.tv-display-mode .scene-frame {
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  border-width: 0;
+  box-shadow: none;
+}
+
+body.tv-display-mode .tv-change-week {
+  display: block;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 9001;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 2px solid rgba(255,255,255,.85);
+  border-radius: 10px;
+  background: rgba(24,39,44,.66);
+  color: white;
+  font: 800 .95rem/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.tv-display-mode .tv-change-week:focus {
+  outline: 4px solid white;
+  outline-offset: 3px;
+}
