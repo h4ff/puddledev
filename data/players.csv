@@ -1,0 +1,9 @@
+playerId,name,nickname,presentation,featherTone,build,president,captain,coach,hair,headwear,swimAccessory
+P001,Alex Marsh,Marshy,male,white,standard,false,false,false,short-brown,none,
+P002,Brooke Lane,,female,lightBrown,standard,false,false,false,ponytail-blonde,none,
+P003,Chris Webb,Webby,male,yellow,stocky,false,true,false,buzz,cap,
+P004,Dana Reid,,female,darkBrown,short,false,false,false,part-brown,none,
+P005,Evan Cole,,male,white,big,false,false,true,none,cap,
+P006,Frankie Shaw,,female,yellow,beanpole,false,false,false,ponytail-red,none,
+P007,Pat President,Prez,male,white,standard,true,false,false,short-gray,none,
+P008,Morgan Bell,,male,lightBrown,standard,false,true,true,mullet-black,cap,
