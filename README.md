@@ -1,4 +1,12 @@
-# Duck Pond — v1.0.2
+# Duck Pond — v1.0.3
+
+## v1.0.3 – Smart TV stability
+
+- Uses classic transform-based pond positioning on detected TV browsers to reduce jitter.
+- Keeps swimming prestige stars aligned to the 512×512 duck canvas on legacy TV engines.
+- Disables Gangnam and duck fights on TV browsers because older Web Animations implementations can abort those sequences mid-event.
+- Modern phone/desktop browsers retain all existing interactions and performance paths.
+
 
 Duck Pond is the Taipans Cricket Club weekly duck animation. Player and duck data are loaded from CSV files and rendered as an interactive pond for desktop and mobile browsers.
 
