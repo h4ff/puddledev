@@ -1,4 +1,4 @@
-# Duck Pond — v1.0.3
+# Duck Pond — v1.0.4
 
 ## v1.0.3 – Smart TV stability
 
@@ -57,3 +57,7 @@ v1.0.0 is the production launch build promoted directly from the tested v0.183 r
 - TV mode hides normal page chrome and leaves a remote-friendly **Change week** control to return to the selector.
 - The default remains the latest populated club week.
 - No duck, animation, asset, CSV or scoring behaviour changed from v1.0.0.
+
+## Release notes
+
+v1.0.4 improves TV startup/display behaviour. Detected TV browsers enter full-pond display mode immediately, show the loading pond overlay while production data/assets are prepared, then begin the newest-week entry sequence without waiting for all ducks to finish entering. The non-working TV Change Week control has been removed. Modern phone/desktop behaviour is unchanged.
