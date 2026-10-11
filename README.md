@@ -1,4 +1,4 @@
-# Duck Pond — v1.0.1
+# Duck Pond — v1.0.2
 
 Duck Pond is the Taipans Cricket Club weekly duck animation. Player and duck data are loaded from CSV files and rendered as an interactive pond for desktop and mobile browsers.
 
