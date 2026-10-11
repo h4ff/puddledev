@@ -1842,6 +1842,10 @@
             updateLandscapeScrollHints();
         });
     }
+    // v1.0.2: old smart-TV browsers may parse the app but not support the
+    // individual CSS `translate` property. Fall back to the proven left/top path.
+    const supportsIndividualTranslate = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("translate", "1px 1px");
+
     function setWorldPosition(element, xPct, yPct) {
         var _a, _b;
         const xPx = pctToWorldX(xPct);
@@ -1851,7 +1855,7 @@
         // choreography anchors their zero-size wrapper at the feet. Keeping pond
         // position in the individual `translate` property lets the existing
         // bob/scale/rotation `transform` continue independently.
-        if (((_a = element === null || element === void 0 ? void 0 : element.classList) === null || _a === void 0 ? void 0 : _a.contains("duck")) && !element.classList.contains("entrying")) {
+        if (supportsIndividualTranslate && ((_a = element === null || element === void 0 ? void 0 : element.classList) === null || _a === void 0 ? void 0 : _a.contains("duck")) && !element.classList.contains("entrying")) {
             if (!element._usesPondTranslate) {
                 element.style.left = "0px";
                 element.style.top = "0px";
