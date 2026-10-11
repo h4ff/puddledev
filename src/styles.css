@@ -2203,3 +2203,7 @@ body.tv-browser .prestige-swim-glints {
 body.tv-browser #gangnamDoorHotspot {
   pointer-events: none;
 }
+
+
+/* v1.0.4: TV is a fixed latest-week display; no remote week-change control. */
+body.tv-browser .tv-change-week { display: none !important; }

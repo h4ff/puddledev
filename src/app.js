@@ -122,18 +122,8 @@
             return;
         document.body.classList.add("tv-display-mode");
         if (tvChangeWeek)
-            tvChangeWeek.hidden = false;
-        applyWorldScale();
-    }
-    function exitTvDisplayMode() {
-        if (!TV_BROWSER)
-            return;
-        document.body.classList.remove("tv-display-mode");
-        if (tvChangeWeek)
             tvChangeWeek.hidden = true;
         applyWorldScale();
-        if (weekSelect)
-            weekSelect.focus();
     }
     const loadingOverlay = document.getElementById("loadingOverlay");
     const loadingTitle = document.getElementById("loadingTitle");
@@ -1318,16 +1308,18 @@
             loadingProgress.textContent = "100%";
         if (loadingTitle)
             loadingTitle.textContent = "Pond ready";
+        if (TV_BROWSER)
+            enterTvDisplayMode();
         if (loadingOverlay) {
             loadingOverlay.classList.add("loading-complete");
             window.setTimeout(() => {
                 loadingOverlay.hidden = true;
-                loadSelectedWeek({ assetsReady: true }).then(() => enterTvDisplayMode());
+                loadSelectedWeek({ assetsReady: true });
                 warmRemainingAssetsInBackground();
-            }, 220);
+            }, TV_BROWSER ? 500 : 220);
         }
         else {
-            loadSelectedWeek({ assetsReady: true }).then(() => enterTvDisplayMode());
+            loadSelectedWeek({ assetsReady: true });
             warmRemainingAssetsInBackground();
         }
     }
@@ -1842,7 +1834,7 @@
             updateLandscapeScrollHints();
         });
     }
-    // v1.0.3: modern browsers retain the compositor-friendly individual
+    // v1.0.4: modern browsers retain the compositor-friendly individual
     // `translate` path. TV browsers use a classic transform string instead of
     // layout-heavy left/top animation, which is markedly smoother on older webOS.
     const supportsIndividualTranslate = typeof CSS !== "undefined" && typeof CSS.supports === "function" && CSS.supports("translate", "1px 1px");
@@ -4702,9 +4694,6 @@
             updateWeekSummary();
             loadSelectedWeek().then(() => enterTvDisplayMode());
         });
-    if (tvChangeWeek) {
-        tvChangeWeek.addEventListener("click", exitTvDisplayMode);
-    }
     liveScoreboard.addEventListener("click", () => {
         scoreboardPanel.hidden = false;
     });
@@ -5092,6 +5081,17 @@
     }
     setInterval(prestigeTrailTick, 170);
     try {
+        if (TV_BROWSER) {
+            enterTvDisplayMode();
+            if (loadingOverlay) {
+                loadingOverlay.hidden = false;
+                loadingOverlay.classList.remove("loading-complete", "loading-failed");
+            }
+            if (loadingTitle)
+                loadingTitle.textContent = "Loading pond…";
+            if (loadingProgress)
+                loadingProgress.textContent = "0%";
+        }
         applyWorldScale();
         updateCounts();
         setWeekSelectEnabled(false);
