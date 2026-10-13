@@ -1,4 +1,4 @@
-# Duck Pond — v1.0.5
+# Duck Pond — v1.0.6
 
 ## v1.0.3 – Smart TV stability
 
@@ -63,9 +63,10 @@ v1.0.0 is the production launch build promoted directly from the tested v0.183 r
 v1.0.4 improves TV startup/display behaviour. Detected TV browsers enter full-pond display mode immediately, show the loading pond overlay while production data/assets are prepared, then begin the newest-week entry sequence without waiting for all ducks to finish entering. The non-working TV Change Week control has been removed. Modern phone/desktop behaviour is unchanged.
 
 
-## v1.0.5
+## v1.0.6
 
-- Added Hisense / VIDAA / Odin detection for TV display mode.
-- Hisense TVs enter full-pond display mode immediately on startup.
-- Hisense keeps the normal high-performance rendering path rather than the legacy LG compatibility path.
-- No assets or CSV data changed.
+- Rebuilt directly from known-good v1.0.4.
+- Added Hisense / VIDAA / Odin detection only for TV display mode.
+- Hisense enters full-pond TV display mode immediately at startup.
+- Existing v1.0.4 rendering and legacy-TV compatibility logic is unchanged.
+- No CSS, assets or CSV data changed.
