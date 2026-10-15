@@ -1,4 +1,4 @@
-# Duck Pond — v1.0.6
+# Duck Pond — v1.0.7
 
 ## v1.0.3 – Smart TV stability
 
@@ -70,3 +70,12 @@ v1.0.4 improves TV startup/display behaviour. Detected TV browsers enter full-po
 - Hisense enters full-pond TV display mode immediately at startup.
 - Existing v1.0.4 rendering and legacy-TV compatibility logic is unchanged.
 - No CSS, assets or CSV data changed.
+
+
+## v1.0.7
+
+- Added deterministic TV display mode via `?tv=1`.
+- A forced TV display choice is remembered in local storage for future visits on that browser.
+- `?tv=0` clears the remembered TV display choice and disables TV display mode for that load.
+- Existing v1.0.6 rendering and legacy-TV compatibility logic is unchanged.
+- No CSS, assets, or CSV data changed.
