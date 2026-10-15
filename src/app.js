@@ -118,8 +118,43 @@
         const ua = navigator.userAgent || "";
         return tvBrowserDetected() || /Hisense|VIDAA|Odin/i.test(ua);
     }
+    function tvDisplayQueryOverride() {
+        const query = (window.location && window.location.search) || "";
+        if (/(?:^|[?&])tv=1(?:&|$)/i.test(query))
+            return true;
+        if (/(?:^|[?&])tv=0(?:&|$)/i.test(query))
+            return false;
+        return null;
+    }
+    function rememberedTvDisplayMode() {
+        try {
+            return window.localStorage.getItem("duckPondTvDisplay") === "1";
+        }
+        catch (_error) {
+            return false;
+        }
+    }
     const TV_BROWSER = tvBrowserDetected();
-    const TV_DISPLAY_BROWSER = tvDisplayBrowserDetected();
+    const TV_DISPLAY_QUERY = tvDisplayQueryOverride();
+    if (TV_DISPLAY_QUERY === true) {
+        try {
+            window.localStorage.setItem("duckPondTvDisplay", "1");
+        }
+        catch (_error) {
+            // TV mode still applies for this page load even if storage is unavailable.
+        }
+    }
+    else if (TV_DISPLAY_QUERY === false) {
+        try {
+            window.localStorage.removeItem("duckPondTvDisplay");
+        }
+        catch (_error) {
+            // Ignore storage failures; ?tv=0 still disables TV display for this load.
+        }
+    }
+    const TV_DISPLAY_BROWSER = TV_DISPLAY_QUERY === false
+        ? false
+        : (TV_DISPLAY_QUERY === true || rememberedTvDisplayMode() || tvDisplayBrowserDetected());
     if (TV_BROWSER)
         document.body.classList.add("tv-browser");
     function enterTvDisplayMode() {
