@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.2
+# Duck Pond — v1.2-dev.4
 
 ## v1.0.3 – Smart TV stability
 
@@ -91,3 +91,23 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Fixes the cricket trigger being nested inside a mobile-only toolbar and therefore hidden on desktop.
 - Moves “Bowler’s name?” into the main production toolbar so it is visible on desktop and mobile, but remains hidden in TV display mode.
 - Corrects CSS and JS cache-buster references to the current dev build.
+
+## v1.2-dev.3
+
+- Reoriented cricket pitch to run away from the viewer.
+- Bowling is now an upward flick-to-release gesture; the delivery path runs automatically.
+- Disabled normal click-scoot and collision reactions while cricket is active.
+- Kept the cricket ball visible through delivery and six animations and hardened reset behaviour.
+- Increased ball size.
+- Added random six trajectories around the ground.
+- Pushed fielders toward the pond edges and made them face Lincoln once set.
+- Moved “Bowler’s name?” above the scoreboard and only reveals it after all weekly entrants have finished.
+- Enlarged scoreboard taunts; only some taunts mention sandpaper.
+- Improved temporary bat proportions for the prototype.
+
+## v1.2-dev.4
+
+- Corrected Lincoln's dismissal exit.
+- Lincoln now swims toward the pavilion bank, gets visually smaller as he moves away,
+  transitions to walking near the steps, walks up toward the pavilion door, and disappears through it.
+- Removed the reverse-pier/moonwalk exit from the cricket game.

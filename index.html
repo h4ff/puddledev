@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none';">
-  <title>Taipans Duck Pond — v1.2-dev.2</title>
-  <link rel="stylesheet" href="src/styles.css?v=1.2-dev.2">
+  <title>Taipans Duck Pond — v1.2-dev.4</title>
+  <link rel="stylesheet" href="src/styles.css?v=1.2-dev.4">
 </head>
 <body>
   <main class="app-shell production-shell">
@@ -27,7 +27,6 @@
         <button id="mobileZoomReset" type="button" class="secondary" hidden>Reset Zoom</button>
       </div>
 
-      <button id="cricketGameButton" type="button" class="secondary cricket-game-button">Bowler’s name?</button>
     </header>
 
     <section id="sceneFrame" class="scene-frame" aria-label="Interactive Taipan duck pond">
@@ -44,6 +43,8 @@
           <img id="gangnamVerandah" class="gangnam-verandah" src="assets/gangnam/Verandah.png" alt="">
         </div>
         <button id="gangnamDoorHotspot" class="gangnam-door-hotspot" type="button" aria-label="Pavilion door"></button>
+
+        <button id="cricketGameButton" type="button" class="cricket-game-button" hidden>Bowler’s name?</button>
 
         <button id="liveScoreboard" class="live-scoreboard" type="button"
                 aria-label="Open pond scoreboard" data-mode="leaderboard">
@@ -121,6 +122,6 @@
     <div id="status" hidden aria-live="polite"></div>
   </main>
 
-  <script src="src/app.js?v=1.2-dev.2"></script>
+  <script src="src/app.js?v=1.2-dev.4"></script>
 </body>
 </html>
