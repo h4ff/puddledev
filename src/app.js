@@ -81,6 +81,11 @@
     const gangnamDoorHotspot = document.getElementById("gangnamDoorHotspot");
     const mobilePondToggle = document.getElementById("mobilePondToggle");
     const mobileZoomReset = document.getElementById("mobileZoomReset");
+    const cricketGameButton = document.getElementById("cricketGameButton");
+    const cricketGameLayer = document.getElementById("cricketGameLayer");
+    const cricketPitch = document.getElementById("cricketPitch");
+    const cricketStumps = document.getElementById("cricketStumps");
+    const cricketBall = document.getElementById("cricketBall");
     const landscapeScrollHintLeft = document.getElementById("landscapeScrollHintLeft");
     const landscapeScrollHintRight = document.getElementById("landscapeScrollHintRight");
     const facebookBrowserNotice = document.getElementById("facebookBrowserNotice");
@@ -4557,6 +4562,311 @@
             eventDate: event.date || ""
         });
     }
+
+    // v1.2-dev.1: Lincoln bowling mini-game prototype. This deliberately uses
+    // existing duck movement/face/entry systems so the first DEV pass can prove
+    // the joke and interaction before bespoke cricket artwork is produced.
+    const CRICKET_LINCOLN_PLAYER_ID = "P043";
+    const CRICKET_BOWLER_POS = { x: 46.2, y: 69.6 };
+    const CRICKET_BATTER_POS = { x: 61.8, y: 64.0 };
+    const CRICKET_EXIT_WATER_POS = { x: 37.0, y: 77.6 };
+    const CRICKET_FIELD_POSITIONS = [
+        {x:18,y:61},{x:27,y:55},{x:38,y:54},{x:50,y:53},{x:66,y:54},{x:80,y:58},
+        {x:88,y:65},{x:84,y:75},{x:72,y:82},{x:58,y:85},{x:43,y:84},{x:28,y:81},
+        {x:18,y:75},{x:24,y:68},{x:73,y:64},{x:76,y:72},{x:54,y:78},{x:37,y:61}
+    ];
+    let cricketState = "idle";
+    let cricketBowler = null;
+    let cricketLincoln = null;
+    let cricketLincolnWasTemporary = false;
+    let cricketSixes = 0;
+    let cricketBallScuffed = false;
+    let cricketClueActive = false;
+    let cricketOriginalPositions = new Map();
+    let cricketBallDrag = null;
+    let cricketRubDistance = 0;
+
+    function cricketScore(label, primary, secondary = "") {
+        scoreboardMode = "cricket";
+        liveScoreboard?.setAttribute("data-mode", "entrant");
+        if (scoreboardLabel) scoreboardLabel.textContent = label;
+        if (scoreboardPrimary) scoreboardPrimary.textContent = primary;
+        if (scoreboardSecondary) scoreboardSecondary.textContent = secondary;
+        scoreboardMinis.forEach((element, index) => renderScoreMini(element, index + 1, ""));
+        fitScoreboardPrimary();
+    }
+    function cricketCurrentPoint(duck) {
+        return { x: Number(duck?.dataset.x || 55), y: Number(duck?.dataset.y || 70) };
+    }
+    function cricketStopDuck(duck) {
+        if (!duck) return;
+        clearTimeout(duck._roamTimer);
+        clearTimeout(duck._moodTimer);
+        clearTimeout(duck._blinkTimer);
+        clearTimeout(duck._idleWingTimer);
+        clearTimeout(duck._idleWingEndTimer);
+        duck.dataset.moveToken = String(Number(duck.dataset.moveToken || 0) + 1);
+        if (duck._moveFrame) cancelAnimationFrame(duck._moveFrame);
+        duck._moveFrame = null;
+        duck.dataset.motionState = "floating";
+        duck.classList.add("floating");
+    }
+    async function cricketMoveDuck(duck, target, duration = 2200) {
+        if (!duck?.isConnected) return;
+        cricketStopDuck(duck);
+        const from = cricketCurrentPoint(duck);
+        duck.dataset.motionState = "swimming";
+        await animateRoute(duck, from, nearestValidStoppingPoint(target), duration);
+        if (!duck.isConnected) return;
+        const safe = nearestValidStoppingPoint(target);
+        setWorldPosition(duck, safe.x, safe.y);
+        duck.dataset.x = safe.x.toFixed(3);
+        duck.dataset.y = safe.y.toFixed(3);
+        setDepth(duck, safe.y);
+        duck.dataset.motionState = "floating";
+        duck.classList.add("floating");
+    }
+    function cricketSetBallPosition(x, y) {
+        if (!cricketBall) return;
+        cricketBall.style.left = `${x}%`;
+        cricketBall.style.top = `${y}%`;
+        cricketBall.dataset.x = String(x);
+        cricketBall.dataset.y = String(y);
+    }
+    function cricketResetBall() {
+        cricketSetBallPosition(CRICKET_BOWLER_POS.x + 1.7, CRICKET_BOWLER_POS.y - 1.2);
+        cricketGameLayer?.classList.add("is-ready");
+        cricketState = "ready";
+    }
+    function cricketWorldPointFromClient(clientX, clientY) {
+        const rect = world.getBoundingClientRect();
+        return {
+            x: Math.max(0, Math.min(100, (clientX - rect.left) / rect.width * 100)),
+            y: Math.max(0, Math.min(100, (clientY - rect.top) / rect.height * 100))
+        };
+    }
+    function cricketAnimateBall(points, duration) {
+        return new Promise(resolve => {
+            const started = performance.now();
+            const frame = now => {
+                const raw = Math.min(1, (now - started) / duration);
+                const scaled = raw * (points.length - 1);
+                const index = Math.min(points.length - 2, Math.floor(scaled));
+                const local = Math.min(1, scaled - index);
+                const a = points[index], b = points[index + 1];
+                const eased = local * local * (3 - 2 * local);
+                cricketSetBallPosition(a.x + (b.x-a.x)*eased, a.y + (b.y-a.y)*eased);
+                if (raw < 1) requestAnimationFrame(frame); else resolve();
+            };
+            requestAnimationFrame(frame);
+        });
+    }
+    function cricketTauntAfterSix() {
+        cricketSixes++;
+        cricketClueActive = true;
+        const taunts = [
+            "NEED SOME SANDPAPER?",
+            "STILL SIX. SANDPAPER?",
+            "HE KNOWS IT'S OUTSWING. SANDPAPER?",
+            "SERIOUSLY. TRY THE SANDPAPER."
+        ];
+        cricketScore("LINCOLN: SIX", `${cricketSixes}/6`, taunts[Math.min(cricketSixes - 1, taunts.length - 1)]);
+    }
+    async function cricketBowl() {
+        if (cricketState !== "ready" || !cricketBowler || !cricketLincoln) return;
+        cricketState = "bowling";
+        cricketGameLayer?.classList.remove("is-ready");
+        cricketBowler.classList.add("cricket-bowling");
+        setTimeout(() => cricketBowler?.classList.remove("cricket-bowling"), 520);
+        await sleep(190);
+        if (cricketBallScuffed) {
+            cricketScore("HERE WE GO", "SCUFFED", "THAT'S MOVING...");
+            await cricketAnimateBall([
+                {x:47.8,y:68.4},{x:53.0,y:64.0},{x:58.1,y:61.6},{x:61.7,y:63.5}
+            ], 820);
+            cricketStumps?.classList.add("is-bowled");
+            setDuckFace(cricketLincoln, "sad");
+            cricketScore("BOWLED!", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), "SANDPAPER DOES THE TRICK");
+            await sleep(1250);
+            await cricketFinishDismissal();
+            return;
+        }
+        await cricketAnimateBall([
+            {x:47.8,y:68.4},{x:53.2,y:63.9},{x:58.0,y:61.9},{x:61.6,y:63.7}
+        ], 760);
+        setDuckFace(cricketLincoln, "maniacal");
+        cricketLincoln.classList.add("cricket-swing");
+        await sleep(120);
+        await cricketAnimateBall([
+            {x:61.6,y:63.7},{x:70.0,y:56.0},{x:79.0,y:49.0},{x:91.0,y:43.0},
+            {x:89.5,y:45.2},{x:91.0,y:43.8}
+        ], 980);
+        cricketLincoln.classList.remove("cricket-swing");
+        setDuckFace(cricketLincoln, "neutral");
+        cricketTauntAfterSix();
+        await sleep(900);
+        cricketResetBall();
+    }
+    async function cricketWalkLincolnOff() {
+        if (!cricketLincoln?.isConnected) return;
+        await cricketMoveDuck(cricketLincoln, CRICKET_EXIT_WATER_POS, 2600);
+        cricketStopDuck(cricketLincoln);
+        cricketLincoln.classList.add("entrying");
+        cricketLincoln.style.zIndex = "2600";
+        buildEntryVisual(cricketLincoln, 1);
+        setEntryFace(cricketLincoln, "sad");
+        const reverseWalk = [
+            {at:0,x:31,y:76.45,rotation:0,scale:1.31,opacity:1},
+            {at:.22,x:23.5,y:76.58,rotation:-2,scale:1.31,opacity:1},
+            {at:.45,x:15,y:76.70,rotation:2,scale:1.31,opacity:1},
+            {at:.70,x:6,y:76.58,rotation:-2,scale:1.31,opacity:1},
+            {at:1,x:-11,y:76.75,rotation:0,scale:1.31,opacity:0}
+        ];
+        let wi=0, cycle=[1,2,3,2,1];
+        setWalkFrame(cricketLincoln, cycle[0]);
+        cricketLincoln._walkTimer=setInterval(()=>{ wi=(wi+1)%cycle.length; setWalkFrame(cricketLincoln,cycle[wi]); },175);
+        await animateEntrySegment(cricketLincoln, reverseWalk, 3900, t=>t, "feet");
+        clearInterval(cricketLincoln._walkTimer); cricketLincoln._walkTimer=null;
+        cricketLincoln.style.opacity="0";
+    }
+    async function cricketRestoreFielders() {
+        const tasks=[];
+        for (const duck of ducks.values()) {
+            if (duck === cricketLincoln) continue;
+            duck.classList.remove("cricket-selected","cricket-bowler");
+            const original=cricketOriginalPositions.get(duck.dataset.duckId);
+            if (original) tasks.push(cricketMoveDuck(duck, original, 2500 + Math.random()*900));
+        }
+        await Promise.all(tasks);
+    }
+    async function cricketFinishDismissal() {
+        cricketState="ending";
+        cricketGameLayer?.classList.remove("is-ready");
+        cricketLincoln?.classList.remove("cricket-swing");
+        await cricketWalkLincolnOff();
+        await cricketRestoreFielders();
+        await sleep(2200);
+        if (cricketLincoln?.isConnected) {
+            cricketLincoln.style.opacity="1";
+            cricketLincoln.classList.remove("cricket-batter");
+            const returnPoint=cricketOriginalPositions.get(cricketLincoln.dataset.duckId) || distributedPoint(cricketLincoln);
+            await animateEntry(cricketLincoln, returnPoint);
+        }
+        cricketStumps?.classList.remove("is-bowled");
+        cricketGameLayer?.classList.remove("is-active","is-ready");
+        world?.classList.remove("cricket-game-running","cricket-choose-bowler");
+        for (const duck of ducks.values()) {
+            duck.classList.remove("cricket-selected","cricket-bowler","cricket-batter","cricket-swing","cricket-bowling");
+            if (duck.dataset.motionState === "floating") {
+                scheduleMoodShift(duck);
+                scheduleRoam(duck, 1800 + Math.random()*4800);
+                scheduleIdleLife(duck);
+            }
+        }
+        cricketState="idle";
+        cricketBowler=null; cricketLincoln=null; cricketBallScuffed=false; cricketClueActive=false; cricketRubDistance=0;
+        cricketBall?.classList.remove("is-scuffed","is-dragging");
+        cricketOriginalPositions.clear();
+        showLeaderboardScoreboard();
+        enableSnakeEvent();
+        enableRandomFights();
+    }
+    async function cricketArrangeField(bowler) {
+        cricketState="setting";
+        disableSnakeEvent();
+        disableRandomFights();
+        cancelArmedFight({resumeScoot:false});
+        hidePlayerStats();
+        world?.classList.remove("cricket-choose-bowler");
+        world?.classList.add("cricket-game-running");
+        cricketGameLayer?.classList.add("is-active");
+        cricketOriginalPositions.clear();
+        for (const duck of ducks.values()) cricketOriginalPositions.set(duck.dataset.duckId, cricketCurrentPoint(duck));
+        cricketBowler=bowler;
+        cricketBowler.classList.add("cricket-selected","cricket-bowler");
+        let lincoln=[...ducks.values()].find(duck=>duck.dataset.playerId===CRICKET_LINCOLN_PLAYER_ID && duck!==bowler) || null;
+        if (!lincoln) {
+            const player=playerById(CRICKET_LINCOLN_PLAYER_ID);
+            if (!player) { cricketScore("GAME ERROR","LINCOLN?","P043 NOT FOUND"); cricketState="idle"; return; }
+            lincoln=makePlayerDuck(player,{duckType:"standard",id:"cricket-lincoln",date:""},{instant:true,point:distributedPoint()});
+            cricketLincolnWasTemporary=true;
+            cricketOriginalPositions.set(lincoln.dataset.duckId, cricketCurrentPoint(lincoln));
+        } else cricketLincolnWasTemporary=false;
+        cricketLincoln=lincoln;
+        cricketLincoln.classList.add("cricket-batter");
+        setDuckFace(cricketLincoln,"neutral");
+        const fielders=[...ducks.values()].filter(d=>d!==cricketBowler && d!==cricketLincoln);
+        const moves=[];
+        moves.push(cricketMoveDuck(cricketBowler,CRICKET_BOWLER_POS,2200));
+        moves.push(cricketMoveDuck(cricketLincoln,CRICKET_BATTER_POS,2300));
+        fielders.forEach((duck,index)=>moves.push(cricketMoveDuck(duck,CRICKET_FIELD_POSITIONS[index%CRICKET_FIELD_POSITIONS.length],2400+(index%5)*180)));
+        cricketScore("SETTING THE FIELD", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), `${bowler.dataset.playerName || "BOWLER"} HAS THE BALL`);
+        await Promise.all(moves);
+        setDuckFace(cricketLincoln,"neutral");
+        cricketResetBall();
+        cricketScore("LINCOLN WONG", "READY", "FLICK THE BALL TO BOWL");
+    }
+    function cricketBeginSelection() {
+        if (TV_DISPLAY_BROWSER || cricketState!=="idle" || !ducks.size) return;
+        cricketState="selecting";
+        world?.classList.add("cricket-choose-bowler");
+        cricketScore("BOWLER'S NAME?", "CHOOSE BOWLER", "CLICK A DUCK IN THE POND");
+    }
+    cricketGameButton?.addEventListener("click", event=>{
+        event.preventDefault();
+        cricketBeginSelection();
+    });
+    duckLayer?.addEventListener("click", event=>{
+        if (cricketState!=="selecting") return;
+        const duck=event.target.closest?.(".duck");
+        if (!duck || !duckLayer.contains(duck)) return;
+        event.preventDefault(); event.stopPropagation();
+        if (duck.dataset.playerId===CRICKET_LINCOLN_PLAYER_ID) {
+            cricketScore("NICE TRY", "NOT LINCOLN", "CHOOSE SOMEONE TO BOWL TO HIM");
+            return;
+        }
+        void cricketArrangeField(duck);
+    }, true);
+    cricketBall?.addEventListener("pointerdown", event=>{
+        if (cricketState!=="ready") return;
+        event.preventDefault();
+        cricketBall.setPointerCapture?.(event.pointerId);
+        const x=Number(cricketBall.dataset.x||CRICKET_BOWLER_POS.x), y=Number(cricketBall.dataset.y||CRICKET_BOWLER_POS.y);
+        cricketBallDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,startBallX:x,startBallY:y};
+        cricketBall.classList.add("is-dragging");
+    });
+    cricketBall?.addEventListener("pointermove", event=>{
+        if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
+        event.preventDefault();
+        const p=cricketWorldPointFromClient(event.clientX,event.clientY);
+        cricketSetBallPosition(p.x,p.y);
+        if (cricketClueActive && !cricketBallScuffed) {
+            const rect=liveScoreboard.getBoundingClientRect();
+            const inside=event.clientX>=rect.left && event.clientX<=rect.right && event.clientY>=rect.top && event.clientY<=rect.bottom;
+            if (inside) {
+                cricketRubDistance += Math.abs(event.clientX-cricketBallDrag.lastX);
+                if (cricketRubDistance>=130) {
+                    cricketBallScuffed=true;
+                    cricketBall.classList.add("is-scuffed");
+                    cricketScore("THAT'LL DO", "SCUFFED", "BRING IT BACK AND BOWL");
+                }
+            }
+        }
+        cricketBallDrag.lastX=event.clientX; cricketBallDrag.lastY=event.clientY;
+    });
+    cricketBall?.addEventListener("pointerup", event=>{
+        if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
+        event.preventDefault();
+        cricketBall.classList.remove("is-dragging");
+        const dx=event.clientX-cricketBallDrag.startX, dy=event.clientY-cricketBallDrag.startY;
+        const current={x:Number(cricketBall.dataset.x),y:Number(cricketBall.dataset.y)};
+        const nearReady=Math.hypot(current.x-(CRICKET_BOWLER_POS.x+1.7),current.y-(CRICKET_BOWLER_POS.y-1.2))<4.2;
+        cricketBallDrag=null;
+        if (nearReady) { cricketResetBall(); return; }
+        if (Math.hypot(dx,dy)>42 && dx>20) { void cricketBowl(); return; }
+        cricketResetBall();
+    });
+
     function populateWeekSelect() {
         if (!weekSelect)
             return;
@@ -4735,6 +5045,7 @@
             loadSelectedWeek().then(() => enterTvDisplayMode());
         });
     liveScoreboard.addEventListener("click", () => {
+        if (scoreboardMode === "cricket") return;
         scoreboardPanel.hidden = false;
     });
     closeScoreboard.addEventListener("click", () => {
