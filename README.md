@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.1
+# Duck Pond — v1.2-dev.2
 
 ## v1.0.3 – Smart TV stability
 
@@ -84,3 +84,10 @@ v1.0.4 improves TV startup/display behaviour. Detected TV browsers enter full-po
 ## v1.2-dev.1 — Lincoln bowling game prototype
 
 DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name?” trigger, in-pond bowler selection, field-setting choreography, flick-to-bowl ball control, Lincoln sixes/scoreboard taunts, scoreboard sandpaper rubbing mechanic, scuffed inswing dismissal, Lincoln walk-off and normal pier re-entry. Cricket graphics are intentionally temporary CSS artwork for gameplay testing. Production is unchanged.
+
+
+## v1.2-dev.2
+
+- Fixes the cricket trigger being nested inside a mobile-only toolbar and therefore hidden on desktop.
+- Moves “Bowler’s name?” into the main production toolbar so it is visible on desktop and mobile, but remains hidden in TV display mode.
+- Corrects CSS and JS cache-buster references to the current dev build.
