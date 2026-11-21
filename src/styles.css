@@ -2209,8 +2209,21 @@ body.tv-browser #gangnamDoorHotspot {
 body.tv-browser .tv-change-week { display: none !important; }
 
 
-/* v1.2-dev.1 — Lincoln cricket game prototype --------------------------- */
-.cricket-game-button { white-space: nowrap; }
+/* v1.2-dev.2 — Lincoln cricket game prototype --------------------------- */
+.cricket-game-button {
+  justify-self: end;
+  align-self: center;
+  white-space: nowrap;
+  min-height: 42px;
+  padding: .45rem .8rem;
+  border: 2px solid var(--ink);
+  border-radius: 9px;
+  background: var(--cream);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+}
 body.tv-display-mode .cricket-game-button { display: none !important; }
 
 .cricket-game-layer {
