@@ -4551,6 +4551,7 @@
     // the joke and interaction before bespoke cricket artwork is produced.
     const CRICKET_LINCOLN_PLAYER_ID = "P043";
     const CRICKET_BOWLER_POS = { x: 54.0, y: 80.0 };
+    const CRICKET_BALL_READY_POS = { x: 54.0, y: 75.8 };
     const CRICKET_BATTER_POS = { x: 54.0, y: 59.9 };
     const CRICKET_EXIT_WATER_POS = { x: 60.5, y: 54.5 };
     const CRICKET_FIELD_POSITIONS = [
@@ -4628,7 +4629,7 @@
         cricketBallDrag = null;
         cricketBall?.classList.remove("is-dragging");
         cricketGameLayer?.classList.remove("is-bowling");
-        cricketSetBallPosition(CRICKET_BOWLER_POS.x, CRICKET_BOWLER_POS.y - 1.8);
+        cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
         cricketGameLayer?.classList.add("is-ready");
         cricketState = "ready";
     }
@@ -4688,7 +4689,7 @@
         cricketState = "bowling";
         cricketGameLayer?.classList.remove("is-ready");
         cricketGameLayer?.classList.add("is-bowling");
-        cricketSetBallPosition(CRICKET_BOWLER_POS.x, CRICKET_BOWLER_POS.y - 1.8);
+        cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
 
         cricketBowler.classList.add("cricket-bowling");
         setTimeout(() => cricketBowler?.classList.remove("cricket-bowling"), 520);
@@ -4697,7 +4698,7 @@
         if (cricketBallScuffed) {
             cricketScore("HERE WE GO", "SCUFFED", "THAT'S MOVING...");
             await cricketAnimateBall([
-                {x:54.0,y:78.2},
+                {x:54.0,y:75.8},
                 {x:54.0,y:71.5},
                 {x:55.4,y:65.2},
                 {x:54.0,y:58.0}
@@ -4712,7 +4713,7 @@
 
         // Normal ball: same delivery every time. The user's flick only releases it.
         await cricketAnimateBall([
-            {x:54.0,y:78.2},
+            {x:54.0,y:75.8},
             {x:54.0,y:71.8},
             {x:53.0,y:65.3},
             {x:52.5,y:58.7}
@@ -4879,9 +4880,14 @@
         for (const duck of fielders)
             cricketFaceLincoln(duck);
         cricketFaceLincoln(cricketBowler);
+
+        // Fixed right-handed batting stance. Do not inherit Lincoln's random
+        // pond-facing direction from before the game.
+        cricketLincoln.dataset.facing = "left";
+        buildSwimVisual(cricketLincoln, cricketLincoln.dataset.idleFace || "neutral");
         setDuckFace(cricketLincoln,"neutral");
         cricketResetBall();
-        cricketScore("LINCOLN WONG", "READY", "FLICK THE BALL TO BOWL");
+        cricketScore("LINCOLN WONG", "READY", "PULL BACK & RELEASE");
     }
     function cricketBeginSelection() {
         if (TV_DISPLAY_BROWSER || cricketState!=="idle" || !ducks.size) return;
@@ -4918,30 +4924,24 @@
         event.preventDefault();
         event.stopPropagation();
 
-        const dx = event.clientX - cricketBallDrag.startX;
-        const dy = event.clientY - cricketBallDrag.startY;
-        const rect = liveScoreboard.getBoundingClientRect();
+        const p = cricketWorldPointFromClient(event.clientX,event.clientY);
+        cricketSetBallPosition(p.x,p.y);
+
+        const rect=liveScoreboard.getBoundingClientRect();
         const insideScoreboard = event.clientX>=rect.left && event.clientX<=rect.right &&
             event.clientY>=rect.top && event.clientY<=rect.bottom;
-
-        // Normal bowling is a flick gesture only: the ball stays in the hand until release.
-        // Once the sandpaper clue is active, dragging toward/over the scoreboard becomes
-        // a deliberate ball-manipulation action and the ball follows the pointer.
-        const manipulatingBall = cricketClueActive && (insideScoreboard || Math.abs(dx) > 90 || dy < -90);
-        if (manipulatingBall) {
-            const p=cricketWorldPointFromClient(event.clientX,event.clientY);
-            cricketSetBallPosition(p.x,p.y);
-        }
 
         if (cricketClueActive && !cricketBallScuffed && insideScoreboard) {
             cricketRubDistance += Math.abs(event.clientX-cricketBallDrag.lastX);
             if (cricketRubDistance>=130) {
                 cricketBallScuffed=true;
                 cricketBall.classList.add("is-scuffed");
-                cricketScore("THAT'LL DO", "SCUFFED", "BRING IT BACK AND BOWL");
+                cricketScore("THAT'LL DO", "SCUFFED", "BRING IT BACK & PULL");
             }
         }
-        cricketBallDrag.lastX=event.clientX; cricketBallDrag.lastY=event.clientY;
+
+        cricketBallDrag.lastX=event.clientX;
+        cricketBallDrag.lastY=event.clientY;
     });
     cricketBall?.addEventListener("pointerup", event=>{
         if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
@@ -4949,13 +4949,17 @@
         event.stopPropagation();
         cricketBall.classList.remove("is-dragging");
 
-        const dx=event.clientX-cricketBallDrag.startX;
-        const dy=event.clientY-cricketBallDrag.startY;
-        const flickedAway = Math.hypot(dx,dy) > 34 && dy < -24;
+        const dy = event.clientY - cricketBallDrag.startY;
+        const dx = event.clientX - cricketBallDrag.startX;
+        const pulledBack = dy > 42 && Math.abs(dx) < Math.max(85, dy * 1.5);
+
         cricketBallDrag=null;
 
-        if (flickedAway) {
-            cricketSetBallPosition(CRICKET_BOWLER_POS.x, CRICKET_BOWLER_POS.y - 1.8);
+        if (pulledBack) {
+            // The amount of pull is intentionally not used for speed yet: it
+            // feels like a charge mechanic, but every valid release follows the
+            // same controlled delivery path.
+            cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
             void cricketBowl();
             return;
         }

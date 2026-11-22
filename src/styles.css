@@ -2301,7 +2301,7 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .cricket-ball {
   position: absolute;
   left: 54%;
-  top: 78.2%;
+  top: 75.8%;
   width: 24px;
   height: 24px;
   margin: -12px 0 0 -12px;
@@ -2457,4 +2457,21 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
     width: 84px;
     height: 84px;
   }
+}
+
+
+/* v1.2-dev.8 pull-back bowling ------------------------------------------ */
+.cricket-game-layer.is-ready .cricket-ball {
+  cursor: grab;
+}
+.cricket-game-layer.is-ready .cricket-ball.is-dragging {
+  cursor: grabbing;
+  filter: drop-shadow(0 0 5px rgba(255,255,255,.65));
+}
+
+/* Keep the bowler and batter visually above the pitch/stumps. The ready ball
+   is positioned several percent up-pitch so it does not sit beneath the bowler. */
+.scene-world.cricket-game-running .duck.cricket-bowler,
+.scene-world.cricket-game-running .duck.cricket-batter {
+  pointer-events: none;
 }
