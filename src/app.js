@@ -1339,16 +1339,12 @@
             window.setTimeout(() => {
                 loadingOverlay.hidden = true;
                 loadSelectedWeek({ assetsReady: true }).then(() => {
-                    if (cricketGameButton)
-                        cricketGameButton.hidden = false;
                 });
                 warmRemainingAssetsInBackground();
             }, TV_DISPLAY_BROWSER ? 500 : 220);
         }
         else {
             loadSelectedWeek({ assetsReady: true }).then(() => {
-                if (cricketGameButton)
-                    cricketGameButton.hidden = false;
             });
             warmRemainingAssetsInBackground();
         }
@@ -4815,8 +4811,6 @@
     }
     async function cricketArrangeField(bowler) {
         cricketState="setting";
-        if (cricketGameButton)
-            cricketGameButton.hidden = true;
         disableSnakeEvent();
         disableRandomFights();
         cancelArmedFight({resumeScoot:false});
@@ -5050,8 +5044,6 @@
             return;
         showLeaderboardScoreboard();
         status.textContent = `${formatClubDate(context.start)}–${formatClubDate(context.end)} loaded. ${pondEvents.length} cumulative ducks are now represented in the pond.`;
-        if (cricketGameButton)
-            cricketGameButton.hidden = false;
         enableSnakeEvent();
         enableRandomFights();
     }
@@ -5086,8 +5078,6 @@
     }
     function resetPond() {
         dateRangeLoadToken++;
-        if (cricketGameButton)
-            cricketGameButton.hidden = true;
         disableSnakeEvent();
         disableRandomFights();
         for (const duck of [...ducks.values()])
