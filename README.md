@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.6
+# Duck Pond — v1.2-dev.7
 
 ## v1.0.3 – Smart TV stability
 
@@ -125,3 +125,14 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Includes `src/styles.css` in the changed-files package.
 - Removes runtime hidden/unhidden logic from “Bowler’s name?”.
 - The trigger is visible in the pond by default, hidden only while cricket is running, and remains hidden in TV display mode.
+
+## v1.2-dev.7
+
+- Enlarges the cricket ball's invisible mobile touch target while keeping the visible ball close to its current size.
+- Stops ball pointer gestures from bubbling into pond scrolling/selection.
+- Slightly enlarges the cricket ball interaction target again in mobile landscape.
+- Moves Lincoln forward of the stumps and forces Lincoln/bowler above pitch/stump layers.
+- Smooths six trajectories with more path points and curved interpolation.
+- Slows the post-hit flight slightly for a cleaner read.
+- Removes Lincoln's water-to-land size jump by matching the first walk scale to the final swim scale.
+- Changes Lincoln's exit path so he settles onto the stairs first, then walks upward toward the pavilion doors while getting smaller.
