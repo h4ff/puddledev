@@ -4551,9 +4551,9 @@
     // the joke and interaction before bespoke cricket artwork is produced.
     const CRICKET_LINCOLN_PLAYER_ID = "P043";
     const CRICKET_BOWLER_POS = { x: 54.0, y: 80.0 };
-    const CRICKET_BALL_READY_POS = { x: 54.0, y: 75.8 };
+    const CRICKET_BALL_READY_POS = { x: 54.0, y: 73.2 };
     const CRICKET_BATTER_POS = { x: 54.0, y: 59.9 };
-    const CRICKET_EXIT_WATER_POS = { x: 60.5, y: 54.5 };
+    const CRICKET_EXIT_WATER_POS = { x: 59.0, y: 51.2 };
     const CRICKET_FIELD_POSITIONS = [
         {x:15,y:61},{x:22,y:54},{x:34,y:51},{x:46,y:50},{x:64,y:50},{x:78,y:53},
         {x:89,y:59},{x:92,y:68},{x:88,y:78},{x:77,y:84},{x:63,y:87},{x:47,y:88},
@@ -4624,10 +4624,20 @@
         cricketBall.style.top = `${y}%`;
         cricketBall.dataset.x = String(x);
         cricketBall.dataset.y = String(y);
+
+        if (cricketBowler && cricketBallDrag) {
+            const dx = x - CRICKET_BOWLER_POS.x;
+            const dy = y - CRICKET_BOWLER_POS.y;
+            const angle = Math.max(-110, Math.min(110, Math.atan2(dy, dx) * 180 / Math.PI + 90));
+            cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
+            cricketBowler.classList.add("cricket-wing-tracking");
+        }
     }
     function cricketResetBall() {
         cricketBallDrag = null;
         cricketBall?.classList.remove("is-dragging");
+        cricketBowler?.classList.remove("cricket-wing-tracking");
+        cricketBowler?.style.removeProperty("--cricket-wing-angle");
         cricketGameLayer?.classList.remove("is-bowling");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
         cricketGameLayer?.classList.add("is-ready");
@@ -4758,30 +4768,39 @@
         if (!cricketLincoln?.isConnected)
             return;
 
-        // Swim toward the pavilion bank. This final water point is deliberately
-        // close to the first stair position so the visual hand-off is continuous.
+        // Head for the top waterline exactly where the pavilion steps/path meet
+        // the pond. Fade the pitch once Lincoln is roughly halfway from the wicket
+        // to that water edge.
+        const pitchFadeTimer = setTimeout(() => {
+            cricketPitch?.classList.add("is-gone");
+        }, 1500);
+
         await cricketMoveDuck(cricketLincoln, CRICKET_EXIT_WATER_POS, 2800);
+        clearTimeout(pitchFadeTimer);
+        cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
+        // The pond perspective scale at y≈51 is ~0.45, so begin the walking
+        // asset at the same apparent size to avoid a visible pop.
         cricketLincoln.classList.add("entrying");
         cricketLincoln.style.zIndex = "2600";
         cricketLincoln.style.opacity = "1";
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
-        // Match the first walking scale to the apparent swim size at y=54.5, then
-        // hold him on the stairs before progressing upward and shrinking toward
-        // the pavilion doors.
+        // First stay on the lower steps, then climb toward the pavilion while
+        // shrinking with perspective, finishing through the same door used by
+        // the Gangnam routine.
         const pavilionWalk = [
-            {at:0.00,x:60.5,y:54.5,rotation: 0,scale:.64,opacity:1},
-            {at:0.14,x:61.0,y:53.7,rotation:-1,scale:.63,opacity:1},
-            {at:0.28,x:61.6,y:52.6,rotation: 1,scale:.62,opacity:1},
-            {at:0.42,x:62.0,y:51.3,rotation:-1,scale:.60,opacity:1},
-            {at:0.56,x:62.5,y:48.8,rotation: 1,scale:.57,opacity:1},
-            {at:0.70,x:63.1,y:45.6,rotation:-1,scale:.54,opacity:1},
-            {at:0.82,x:63.7,y:42.6,rotation: 1,scale:.51,opacity:1},
-            {at:0.92,x:64.2,y:40.3,rotation: 0,scale:.49,opacity:1},
-            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.47,opacity:0}
+            {at:0.00,x:59.0,y:51.2,rotation: 0,scale:.45,opacity:1},
+            {at:0.14,x:59.5,y:50.5,rotation:-1,scale:.445,opacity:1},
+            {at:0.28,x:60.1,y:49.5,rotation: 1,scale:.435,opacity:1},
+            {at:0.42,x:60.9,y:48.0,rotation:-1,scale:.420,opacity:1},
+            {at:0.56,x:61.8,y:46.0,rotation: 1,scale:.402,opacity:1},
+            {at:0.70,x:62.7,y:43.7,rotation:-1,scale:.382,opacity:1},
+            {at:0.82,x:63.5,y:41.5,rotation: 1,scale:.365,opacity:1},
+            {at:0.92,x:64.1,y:39.7,rotation: 0,scale:.352,opacity:1},
+            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.340,opacity:0}
         ];
 
         let wi = 0;
@@ -4794,13 +4813,18 @@
             setWalkFrame(cricketLincoln, cycle[wi]);
         }, 175);
 
+        // Use the same stage + cavity treatment as Gangnam so the actual pavilion
+        // door visibly opens before Lincoln reaches it.
+        gangnamStage?.classList.add("is-active");
         gangnamDoorCavity?.classList.add("is-open");
-        await animateEntrySegment(cricketLincoln, pavilionWalk, 4200, t => t, "feet");
+
+        await animateEntrySegment(cricketLincoln, pavilionWalk, 4400, t => t, "feet");
 
         clearInterval(cricketLincoln._walkTimer);
         cricketLincoln._walkTimer = null;
         cricketLincoln.style.opacity = "0";
         gangnamDoorCavity?.classList.remove("is-open");
+        gangnamStage?.classList.remove("is-active");
     }
     async function cricketRestoreFielders() {
         const tasks=[];
@@ -4826,6 +4850,7 @@
             await animateEntry(cricketLincoln, returnPoint);
         }
         cricketStumps?.classList.remove("is-bowled");
+        cricketPitch?.classList.remove("is-gone");
         cricketGameLayer?.classList.remove("is-active","is-ready");
         world?.classList.remove("cricket-game-running","cricket-choose-bowler");
         for (const duck of ducks.values()) {
@@ -4853,6 +4878,7 @@
         world?.classList.remove("cricket-choose-bowler");
         world?.classList.add("cricket-game-running");
         cricketGameLayer?.classList.add("is-active");
+        cricketPitch?.classList.remove("is-gone");
         cricketOriginalPositions.clear();
         for (const duck of ducks.values()) cricketOriginalPositions.set(duck.dataset.duckId, cricketCurrentPoint(duck));
         cricketBowler=bowler;
@@ -4948,6 +4974,8 @@
         event.preventDefault();
         event.stopPropagation();
         cricketBall.classList.remove("is-dragging");
+        cricketBowler?.classList.remove("cricket-wing-tracking");
+        cricketBowler?.style.removeProperty("--cricket-wing-angle");
 
         const dy = event.clientY - cricketBallDrag.startY;
         const dx = event.clientX - cricketBallDrag.startX;
