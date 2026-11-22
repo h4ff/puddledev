@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.5
+# Duck Pond — v1.2-dev.6
 
 ## v1.0.3 – Smart TV stability
 
@@ -118,3 +118,10 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Forced TV mode is now tied to the current URL/device only and is no longer persisted in localStorage.
 - The normal dev URL therefore returns to normal interactive mode automatically.
 - Added a defensive post-load reveal for the “Bowler’s name?” trigger after the pond entry sequence completes.
+
+## v1.2-dev.6
+
+- Corrects the live DEV mismatch where `index.html` and `app.js` were on dev.5 but `styles.css` was still the dev.2 cricket layout.
+- Includes `src/styles.css` in the changed-files package.
+- Removes runtime hidden/unhidden logic from “Bowler’s name?”.
+- The trigger is visible in the pond by default, hidden only while cricket is running, and remains hidden in TV display mode.
