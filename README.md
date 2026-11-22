@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.7
+# Duck Pond — v1.2-dev.8
 
 ## v1.0.3 – Smart TV stability
 
@@ -136,3 +136,12 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Slows the post-hit flight slightly for a cleaner read.
 - Removes Lincoln's water-to-land size jump by matching the first walk scale to the final swim scale.
 - Changes Lincoln's exit path so he settles onto the stairs first, then walks upward toward the pavilion doors while getting smaller.
+
+## v1.2-dev.8
+
+- Replaces flick-to-bowl with pull-back-and-release.
+- The ball now follows the pointer/finger whenever held, making the same drag interaction usable for the sandpaper clue.
+- A pull toward the viewer of sufficient distance releases a fixed delivery; the pull distance does not yet change pace.
+- Moves the ready ball farther up-pitch so it no longer sits underneath the bowler.
+- Forces Lincoln into a consistent right-handed batting orientation rather than inheriting his previous pond-facing direction.
+- Updates the scoreboard instruction to “PULL BACK & RELEASE”.
