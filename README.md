@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.9
+# Duck Pond — v1.2-dev.10
 
 ## v1.0.3 – Smart TV stability
 
@@ -156,3 +156,15 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Uses the actual Gangnam stage/door cavity so the pavilion door visibly opens as Lincoln approaches.
 - Fades the pitch once Lincoln is roughly halfway between the wicket and the water's edge.
 - Rebuilds the temporary cricket bat as a separate visible handle and blade so the handle remains present while batting and walking.
+
+## v1.2-dev.10
+
+- Moves Lincoln's walk-off left onto the actual pavilion staircase line shown in the background art.
+- Forces Lincoln above the stair foreground while walking to the door.
+- Tucks the temporary bat under his arm for the walk-off.
+- Hides ball, stumps and pitch as the walk-off begins.
+- Resumes normal pond activity as soon as Lincoln disappears through the pavilion doors; his later pier re-entry no longer keeps the pond in cricket mode.
+- Raises the cricket flight layer above the foreground bank so the ball cannot disappear behind it.
+- Adds ball perspective scaling: smaller away from the viewer, larger toward the viewer.
+- Extends six trajectories off-screen instead of leaving the ball apparently stuck in trees/buildings, including some shots in front of the wicket.
+- Keeps the bowling wing anchored at the shoulder and limits tracking to rotation plus a small reach.
