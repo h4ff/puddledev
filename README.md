@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.4
+# Duck Pond — v1.2-dev.5
 
 ## v1.0.3 – Smart TV stability
 
@@ -111,3 +111,10 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Lincoln now swims toward the pavilion bank, gets visually smaller as he moves away,
   transitions to walking near the steps, walks up toward the pavilion door, and disappears through it.
 - Removed the reverse-pier/moonwalk exit from the cricket game.
+
+## v1.2-dev.5
+
+- Fixed the cricket trigger disappearing after devices had previously opened `?tv=1`.
+- Forced TV mode is now tied to the current URL/device only and is no longer persisted in localStorage.
+- The normal dev URL therefore returns to normal interactive mode automatically.
+- Added a defensive post-load reveal for the “Bowler’s name?” trigger after the pond entry sequence completes.
