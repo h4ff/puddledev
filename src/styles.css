@@ -2510,3 +2510,58 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   transform-origin: 58% 47%;
   transition: transform .06s linear;
 }
+
+
+/* v1.2-dev.10 staging/perspective polish -------------------------------- */
+.cricket-game-layer {
+  z-index: 3000;
+}
+.cricket-ball {
+  transform: scale(var(--cricket-ball-scale, 1));
+  transform-origin: center;
+}
+.cricket-ball.is-dragging {
+  transform: scale(calc(var(--cricket-ball-scale, 1) * 1.10));
+}
+.cricket-game-layer.is-clearing .cricket-ball,
+.cricket-game-layer.is-clearing .cricket-stumps,
+.cricket-game-layer.is-clearing .cricket-pitch {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.cricket-stumps,
+.cricket-pitch {
+  transition: opacity .35s ease;
+}
+
+/* Keep the wing anchored at its shoulder pivot. Only rotate it and allow a tiny
+   reach translation; never orbit the whole wing around the duck. */
+.duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
+  animation: none !important;
+  transform:
+    rotate(var(--cricket-wing-angle, 0deg))
+    translateY(calc(var(--cricket-wing-reach, 0px) * -1)) !important;
+  transform-origin: 58% 47% !important;
+  transition: transform .05s linear;
+}
+
+/* Tuck the bat under Lincoln's arm during the walk-off rather than holding the
+   batting pose. */
+.duck.cricket-walkoff .duck-visual::before {
+  left: 60%;
+  top: 42%;
+  height: 16%;
+  transform: rotate(58deg);
+  z-index: 4;
+}
+.duck.cricket-walkoff .duck-visual::after {
+  left: 56%;
+  top: 50%;
+  width: 9%;
+  height: 27%;
+  transform: rotate(58deg);
+  z-index: 3;
+}
+.duck.cricket-walkoff .entry-wing-front {
+  z-index: 7;
+}

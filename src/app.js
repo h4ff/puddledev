@@ -4625,11 +4625,18 @@
         cricketBall.dataset.x = String(x);
         cricketBall.dataset.y = String(y);
 
+        // Perspective: the ready ball is ~1.0 scale. Travelling away/up the pond
+        // gets smaller; travelling toward the viewer/down the pond gets larger.
+        const scale = Math.max(.48, Math.min(1.42, .55 + (y - 40) * .021));
+        cricketBall.style.setProperty("--cricket-ball-scale", scale.toFixed(3));
+
         if (cricketBowler && cricketBallDrag) {
             const dx = x - CRICKET_BOWLER_POS.x;
             const dy = y - CRICKET_BOWLER_POS.y;
-            const angle = Math.max(-110, Math.min(110, Math.atan2(dy, dx) * 180 / Math.PI + 90));
+            const distance = Math.hypot(dx, dy);
+            const angle = Math.max(-76, Math.min(76, dx * 3.2 + (dy - 2) * .7));
             cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
+            cricketBowler.style.setProperty("--cricket-wing-reach", `${Math.min(7, distance * .55).toFixed(2)}px`);
             cricketBowler.classList.add("cricket-wing-tracking");
         }
     }
@@ -4638,6 +4645,7 @@
         cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
+        cricketBowler?.style.removeProperty("--cricket-wing-reach");
         cricketGameLayer?.classList.remove("is-bowling");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
         cricketGameLayer?.classList.add("is-ready");
@@ -4716,7 +4724,8 @@
             cricketStumps?.classList.add("is-bowled");
             setDuckFace(cricketLincoln, "sad");
             cricketScore("BOWLED!", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), "THAT ONE CAME BACK");
-            await sleep(1250);
+            await sleep(1050);
+            cricketGameLayer?.classList.add("is-clearing");
             await cricketFinishDismissal();
             return;
         }
@@ -4736,23 +4745,31 @@
         const sixTargets = [
             [
                 {x:52.5,y:59.0},{x:49.0,y:56.2},{x:44.5,y:52.8},{x:39.2,y:49.0},
-                {x:33.0,y:46.2},{x:26.0,y:43.9},{x:18.0,y:42.1},{x:10.0,y:40.5}
+                {x:33.0,y:46.2},{x:26.0,y:43.9},{x:18.0,y:42.1},{x:-6.0,y:36.0}
             ],
             [
                 {x:52.5,y:59.0},{x:56.8,y:55.8},{x:62.0,y:52.1},{x:68.0,y:48.6},
-                {x:75.0,y:45.8},{x:82.2,y:43.0},{x:88.0,y:41.0},{x:93.0,y:39.0}
+                {x:75.0,y:45.8},{x:82.2,y:43.0},{x:88.0,y:41.0},{x:106.0,y:35.0}
             ],
             [
                 {x:52.5,y:59.0},{x:50.0,y:53.6},{x:47.2,y:48.0},{x:44.0,y:42.5},
-                {x:40.8,y:37.2},{x:37.4,y:33.1},{x:34.2,y:30.0},{x:31.0,y:28.0}
+                {x:40.8,y:37.2},{x:37.4,y:33.1},{x:34.2,y:30.0},{x:24.0,y:15.0}
             ],
             [
                 {x:52.5,y:59.0},{x:55.3,y:53.1},{x:58.8,y:47.0},{x:62.4,y:41.2},
-                {x:65.8,y:36.4},{x:69.0,y:32.4},{x:71.5,y:29.4},{x:73.5,y:27.2}
+                {x:65.8,y:36.4},{x:69.0,y:32.4},{x:71.5,y:29.4},{x:79.0,y:14.0}
             ],
             [
                 {x:52.5,y:59.0},{x:51.7,y:53.8},{x:50.6,y:48.0},{x:49.0,y:42.4},
-                {x:47.3,y:37.0},{x:45.5,y:32.4},{x:43.2,y:28.2},{x:41.0,y:24.5}
+                {x:47.3,y:37.0},{x:45.5,y:32.4},{x:43.2,y:28.2},{x:38.0,y:12.0}
+            ],
+            [
+                {x:52.5,y:59.0},{x:50.5,y:63.0},{x:47.5,y:68.0},{x:44.0,y:74.0},
+                {x:40.0,y:81.0},{x:35.0,y:89.0},{x:28.0,y:98.0},{x:18.0,y:108.0}
+            ],
+            [
+                {x:52.5,y:59.0},{x:56.0,y:63.5},{x:61.0,y:69.0},{x:67.0,y:75.0},
+                {x:74.0,y:82.0},{x:82.0,y:90.0},{x:92.0,y:99.0},{x:106.0,y:109.0}
             ]
         ];
         const hitPath = sixTargets[Math.floor(Math.random() * sixTargets.length)];
@@ -4768,38 +4785,29 @@
         if (!cricketLincoln?.isConnected)
             return;
 
-        // Head for the top waterline exactly where the pavilion steps/path meet
-        // the pond. Fade the pitch once Lincoln is roughly halfway from the wicket
-        // to that water edge.
-        const pitchFadeTimer = setTimeout(() => {
-            cricketPitch?.classList.add("is-gone");
-        }, 1500);
-
-        await cricketMoveDuck(cricketLincoln, CRICKET_EXIT_WATER_POS, 2800);
-        clearTimeout(pitchFadeTimer);
-        cricketPitch?.classList.add("is-gone");
+        // Swim to the actual base of the pavilion staircase, left of the previous
+        // route, so the change to walking lines up with the visible steps.
+        const STAIR_WATER_POS = { x: 53.8, y: 52.6 };
+        await cricketMoveDuck(cricketLincoln, STAIR_WATER_POS, 2750);
         cricketStopDuck(cricketLincoln);
 
-        // The pond perspective scale at y≈51 is ~0.45, so begin the walking
-        // asset at the same apparent size to avoid a visible pop.
-        cricketLincoln.classList.add("entrying");
-        cricketLincoln.style.zIndex = "2600";
+        cricketLincoln.classList.add("entrying", "cricket-walkoff");
+        cricketLincoln.style.zIndex = "2900";
         cricketLincoln.style.opacity = "1";
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
-        // First stay on the lower steps, then climb toward the pavilion while
-        // shrinking with perspective, finishing through the same door used by
-        // the Gangnam routine.
+        // Match the final swim perspective scale at y=52.6 (~.468) so there is no
+        // visible size pop. Stay on the stair run, then shrink toward the doors.
         const pavilionWalk = [
-            {at:0.00,x:59.0,y:51.2,rotation: 0,scale:.45,opacity:1},
-            {at:0.14,x:59.5,y:50.5,rotation:-1,scale:.445,opacity:1},
-            {at:0.28,x:60.1,y:49.5,rotation: 1,scale:.435,opacity:1},
-            {at:0.42,x:60.9,y:48.0,rotation:-1,scale:.420,opacity:1},
-            {at:0.56,x:61.8,y:46.0,rotation: 1,scale:.402,opacity:1},
-            {at:0.70,x:62.7,y:43.7,rotation:-1,scale:.382,opacity:1},
-            {at:0.82,x:63.5,y:41.5,rotation: 1,scale:.365,opacity:1},
-            {at:0.92,x:64.1,y:39.7,rotation: 0,scale:.352,opacity:1},
+            {at:0.00,x:53.8,y:52.6,rotation: 0,scale:.468,opacity:1},
+            {at:0.13,x:54.5,y:51.5,rotation:-1,scale:.460,opacity:1},
+            {at:0.27,x:55.4,y:50.1,rotation: 1,scale:.448,opacity:1},
+            {at:0.41,x:56.5,y:48.4,rotation:-1,scale:.432,opacity:1},
+            {at:0.55,x:57.8,y:46.4,rotation: 1,scale:.414,opacity:1},
+            {at:0.69,x:59.2,y:44.2,rotation:-1,scale:.395,opacity:1},
+            {at:0.81,x:60.7,y:42.0,rotation: 1,scale:.378,opacity:1},
+            {at:0.91,x:62.3,y:40.0,rotation: 0,scale:.360,opacity:1},
             {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.340,opacity:0}
         ];
 
@@ -4813,8 +4821,6 @@
             setWalkFrame(cricketLincoln, cycle[wi]);
         }, 175);
 
-        // Use the same stage + cavity treatment as Gangnam so the actual pavilion
-        // door visibly opens before Lincoln reaches it.
         gangnamStage?.classList.add("is-active");
         gangnamDoorCavity?.classList.add("is-open");
 
@@ -4823,6 +4829,7 @@
         clearInterval(cricketLincoln._walkTimer);
         cricketLincoln._walkTimer = null;
         cricketLincoln.style.opacity = "0";
+        cricketLincoln.classList.remove("cricket-walkoff");
         gangnamDoorCavity?.classList.remove("is-open");
         gangnamStage?.classList.remove("is-active");
     }
@@ -4838,36 +4845,59 @@
     }
     async function cricketFinishDismissal() {
         cricketState="ending";
-        cricketGameLayer?.classList.remove("is-ready");
+        cricketGameLayer?.classList.remove("is-ready","is-bowling");
         cricketLincoln?.classList.remove("cricket-swing");
+
+        // Fielders can start heading home while Lincoln walks off.
+        const restoringFielders = cricketRestoreFielders();
         await cricketWalkLincolnOff();
-        await cricketRestoreFielders();
-        await sleep(2200);
-        if (cricketLincoln?.isConnected) {
-            cricketLincoln.style.opacity="1";
-            cricketLincoln.classList.remove("cricket-batter");
-            const returnPoint=cricketOriginalPositions.get(cricketLincoln.dataset.duckId) || distributedPoint(cricketLincoln);
-            await animateEntry(cricketLincoln, returnPoint);
-        }
+
+        // Lincoln is through the door: cricket presentation is over immediately.
         cricketStumps?.classList.remove("is-bowled");
         cricketPitch?.classList.remove("is-gone");
-        cricketGameLayer?.classList.remove("is-active","is-ready");
+        cricketGameLayer?.classList.remove("is-active","is-ready","is-clearing");
         world?.classList.remove("cricket-game-running","cricket-choose-bowler");
-        for (const duck of ducks.values()) {
-            duck.classList.remove("cricket-selected","cricket-bowler","cricket-batter","cricket-swing","cricket-bowling");
-            if (duck.dataset.motionState === "floating") {
-                scheduleMoodShift(duck);
-                scheduleRoam(duck, 1800 + Math.random()*4800);
-                scheduleIdleLife(duck);
-            }
-        }
+
         cricketState="idle";
-        cricketBowler=null; cricketLincoln=null; cricketBallScuffed=false; cricketClueActive=false; cricketRubDistance=0;
+        cricketBallScuffed=false;
+        cricketClueActive=false;
+        cricketRubDistance=0;
         cricketBall?.classList.remove("is-scuffed","is-dragging");
-        cricketOriginalPositions.clear();
+
         showLeaderboardScoreboard();
         enableSnakeEvent();
         enableRandomFights();
+
+        // Fielders finish returning without keeping the pond in cricket mode.
+        await restoringFielders;
+
+        for (const duck of ducks.values()) {
+            if (duck === cricketLincoln) continue;
+            duck.classList.remove("cricket-selected","cricket-bowler","cricket-batter","cricket-swing","cricket-bowling");
+            if (duck.dataset.motionState === "floating") {
+                scheduleMoodShift(duck);
+                scheduleRoam(duck, 900 + Math.random()*2600);
+                scheduleIdleLife(duck);
+            }
+        }
+
+        // Lincoln comes back later via the normal pier entry, independent of the
+        // pond already having resumed.
+        await sleep(1600);
+        if (cricketLincoln?.isConnected) {
+            cricketLincoln.style.opacity="1";
+            cricketLincoln.classList.remove("cricket-batter","entrying");
+            const returnPoint=cricketOriginalPositions.get(cricketLincoln.dataset.duckId) || distributedPoint(cricketLincoln);
+            await animateEntry(cricketLincoln, returnPoint);
+        }
+
+        if (cricketLincoln?.isConnected) {
+            cricketLincoln.classList.remove("cricket-selected","cricket-bowler","cricket-batter","cricket-swing","cricket-bowling");
+        }
+
+        cricketBowler=null;
+        cricketLincoln=null;
+        cricketOriginalPositions.clear();
     }
     async function cricketArrangeField(bowler) {
         cricketState="setting";
@@ -4976,6 +5006,7 @@
         cricketBall.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
+        cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         const dy = event.clientY - cricketBallDrag.startY;
         const dx = event.clientX - cricketBallDrag.startX;
