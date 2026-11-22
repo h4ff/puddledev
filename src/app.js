@@ -4551,7 +4551,7 @@
     // the joke and interaction before bespoke cricket artwork is produced.
     const CRICKET_LINCOLN_PLAYER_ID = "P043";
     const CRICKET_BOWLER_POS = { x: 54.0, y: 80.0 };
-    const CRICKET_BATTER_POS = { x: 54.0, y: 57.2 };
+    const CRICKET_BATTER_POS = { x: 54.0, y: 59.9 };
     const CRICKET_EXIT_WATER_POS = { x: 60.5, y: 54.5 };
     const CRICKET_FIELD_POSITIONS = [
         {x:15,y:61},{x:22,y:54},{x:34,y:51},{x:46,y:50},{x:64,y:50},{x:78,y:53},
@@ -4640,16 +4640,30 @@
         };
     }
     function cricketAnimateBall(points, duration) {
+        const sample = (p0, p1, p2, p3, t) => {
+            const t2 = t * t;
+            const t3 = t2 * t;
+            return {
+                x: .5 * ((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
+                y: .5 * ((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
+            };
+        };
         return new Promise(resolve => {
             const started = performance.now();
             const frame = now => {
                 const raw = Math.min(1, (now - started) / duration);
-                const scaled = raw * (points.length - 1);
+                const eased = raw < .5
+                    ? 2 * raw * raw
+                    : 1 - Math.pow(-2 * raw + 2, 2) / 2;
+                const scaled = eased * (points.length - 1);
                 const index = Math.min(points.length - 2, Math.floor(scaled));
                 const local = Math.min(1, scaled - index);
-                const a = points[index], b = points[index + 1];
-                const eased = local * local * (3 - 2 * local);
-                cricketSetBallPosition(a.x + (b.x-a.x)*eased, a.y + (b.y-a.y)*eased);
+                const p0 = points[Math.max(0,index-1)];
+                const p1 = points[index];
+                const p2 = points[Math.min(points.length-1,index+1)];
+                const p3 = points[Math.min(points.length-1,index+2)];
+                const p = sample(p0,p1,p2,p3,local);
+                cricketSetBallPosition(p.x,p.y);
                 if (raw < 1) requestAnimationFrame(frame); else resolve();
             };
             requestAnimationFrame(frame);
@@ -4709,14 +4723,29 @@
         await sleep(90);
 
         const sixTargets = [
-            [{x:52.5,y:58.7},{x:38,y:48},{x:22,y:42},{x:10,y:40}],
-            [{x:52.5,y:58.7},{x:64,y:48},{x:79,y:42},{x:92,y:39}],
-            [{x:52.5,y:58.7},{x:43,y:45},{x:34,y:35},{x:30,y:29}],
-            [{x:52.5,y:58.7},{x:61,y:44},{x:69,y:34},{x:73,y:27}],
-            [{x:52.5,y:58.7},{x:48,y:43},{x:43,y:31},{x:41,y:24}]
+            [
+                {x:52.5,y:59.0},{x:49.0,y:56.2},{x:44.5,y:52.8},{x:39.2,y:49.0},
+                {x:33.0,y:46.2},{x:26.0,y:43.9},{x:18.0,y:42.1},{x:10.0,y:40.5}
+            ],
+            [
+                {x:52.5,y:59.0},{x:56.8,y:55.8},{x:62.0,y:52.1},{x:68.0,y:48.6},
+                {x:75.0,y:45.8},{x:82.2,y:43.0},{x:88.0,y:41.0},{x:93.0,y:39.0}
+            ],
+            [
+                {x:52.5,y:59.0},{x:50.0,y:53.6},{x:47.2,y:48.0},{x:44.0,y:42.5},
+                {x:40.8,y:37.2},{x:37.4,y:33.1},{x:34.2,y:30.0},{x:31.0,y:28.0}
+            ],
+            [
+                {x:52.5,y:59.0},{x:55.3,y:53.1},{x:58.8,y:47.0},{x:62.4,y:41.2},
+                {x:65.8,y:36.4},{x:69.0,y:32.4},{x:71.5,y:29.4},{x:73.5,y:27.2}
+            ],
+            [
+                {x:52.5,y:59.0},{x:51.7,y:53.8},{x:50.6,y:48.0},{x:49.0,y:42.4},
+                {x:47.3,y:37.0},{x:45.5,y:32.4},{x:43.2,y:28.2},{x:41.0,y:24.5}
+            ]
         ];
         const hitPath = sixTargets[Math.floor(Math.random() * sixTargets.length)];
-        await cricketAnimateBall(hitPath, 1050);
+        await cricketAnimateBall(hitPath, 1320);
 
         cricketLincoln.classList.remove("cricket-swing");
         setDuckFace(cricketLincoln, "neutral");
@@ -4728,25 +4757,30 @@
         if (!cricketLincoln?.isConnected)
             return;
 
-        // Swim toward the pavilion bank first. Moving upward in world depth naturally
-        // makes Lincoln appear smaller as he heads away from the viewer.
+        // Swim toward the pavilion bank. This final water point is deliberately
+        // close to the first stair position so the visual hand-off is continuous.
         await cricketMoveDuck(cricketLincoln, CRICKET_EXIT_WATER_POS, 2800);
         cricketStopDuck(cricketLincoln);
 
-        // Transition onto land near the pavilion and walk forward/up the steps.
         cricketLincoln.classList.add("entrying");
         cricketLincoln.style.zIndex = "2600";
         cricketLincoln.style.opacity = "1";
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
+        // Match the first walking scale to the apparent swim size at y=54.5, then
+        // hold him on the stairs before progressing upward and shrinking toward
+        // the pavilion doors.
         const pavilionWalk = [
-            {at:0.00,x:60.5,y:54.5,rotation:-2,scale:.82,opacity:1},
-            {at:0.22,x:61.4,y:50.8,rotation: 1,scale:.75,opacity:1},
-            {at:0.45,x:62.4,y:47.0,rotation:-1,scale:.68,opacity:1},
-            {at:0.68,x:63.3,y:43.2,rotation: 1,scale:.61,opacity:1},
-            {at:0.86,x:64.0,y:40.2,rotation:-1,scale:.56,opacity:1},
-            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.51,opacity:0}
+            {at:0.00,x:60.5,y:54.5,rotation: 0,scale:.64,opacity:1},
+            {at:0.14,x:61.0,y:53.7,rotation:-1,scale:.63,opacity:1},
+            {at:0.28,x:61.6,y:52.6,rotation: 1,scale:.62,opacity:1},
+            {at:0.42,x:62.0,y:51.3,rotation:-1,scale:.60,opacity:1},
+            {at:0.56,x:62.5,y:48.8,rotation: 1,scale:.57,opacity:1},
+            {at:0.70,x:63.1,y:45.6,rotation:-1,scale:.54,opacity:1},
+            {at:0.82,x:63.7,y:42.6,rotation: 1,scale:.51,opacity:1},
+            {at:0.92,x:64.2,y:40.3,rotation: 0,scale:.49,opacity:1},
+            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.47,opacity:0}
         ];
 
         let wi = 0;
@@ -4760,7 +4794,7 @@
         }, 175);
 
         gangnamDoorCavity?.classList.add("is-open");
-        await animateEntrySegment(cricketLincoln, pavilionWalk, 3600, t => t, "feet");
+        await animateEntrySegment(cricketLincoln, pavilionWalk, 4200, t => t, "feet");
 
         clearInterval(cricketLincoln._walkTimer);
         cricketLincoln._walkTimer = null;
@@ -4840,6 +4874,8 @@
         fielders.forEach((duck,index)=>moves.push(cricketMoveDuck(duck,CRICKET_FIELD_POSITIONS[index%CRICKET_FIELD_POSITIONS.length],2400+(index%5)*180)));
         cricketScore("SETTING THE FIELD", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), `${bowler.dataset.playerName || "BOWLER"} HAS THE BALL`);
         await Promise.all(moves);
+        cricketBowler.style.zIndex = "2205";
+        cricketLincoln.style.zIndex = "2210";
         for (const duck of fielders)
             cricketFaceLincoln(duck);
         cricketFaceLincoln(cricketBowler);
@@ -4871,6 +4907,7 @@
     cricketBall?.addEventListener("pointerdown", event=>{
         if (cricketState!=="ready") return;
         event.preventDefault();
+        event.stopPropagation();
         cricketBall.setPointerCapture?.(event.pointerId);
         const x=Number(cricketBall.dataset.x||CRICKET_BOWLER_POS.x), y=Number(cricketBall.dataset.y||CRICKET_BOWLER_POS.y);
         cricketBallDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,startBallX:x,startBallY:y};
@@ -4879,6 +4916,7 @@
     cricketBall?.addEventListener("pointermove", event=>{
         if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
         event.preventDefault();
+        event.stopPropagation();
 
         const dx = event.clientX - cricketBallDrag.startX;
         const dy = event.clientY - cricketBallDrag.startY;
@@ -4908,6 +4946,7 @@
     cricketBall?.addEventListener("pointerup", event=>{
         if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
         event.preventDefault();
+        event.stopPropagation();
         cricketBall.classList.remove("is-dragging");
 
         const dx=event.clientX-cricketBallDrag.startX;
