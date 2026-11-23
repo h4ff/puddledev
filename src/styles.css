@@ -2315,8 +2315,8 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   display: none;
   z-index: 20;
 }
-.cricket-game-layer.is-ready .cricket-ball,
-.cricket-game-layer.is-bowling .cricket-ball { display: block; }
+.cricket-ball-layer.is-ready .cricket-ball,
+.cricket-ball-layer.is-bowling .cricket-ball { display: block; }
 .cricket-ball::after {
   content: "";
   position: absolute;
@@ -2480,10 +2480,10 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 
 
 /* v1.2-dev.8 pull-back bowling ------------------------------------------ */
-.cricket-game-layer.is-ready .cricket-ball {
+.cricket-ball-layer.is-ready .cricket-ball {
   cursor: grab;
 }
-.cricket-game-layer.is-ready .cricket-ball.is-dragging {
+.cricket-ball-layer.is-ready .cricket-ball.is-dragging {
   cursor: grabbing;
   filter: drop-shadow(0 0 5px rgba(255,255,255,.65));
 }
@@ -2513,9 +2513,6 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 
 
 /* v1.2-dev.10 staging/perspective polish -------------------------------- */
-.cricket-game-layer {
-  z-index: 3000;
-}
 .cricket-ball {
   transform: scale(var(--cricket-ball-scale, 1));
   transform-origin: center;
@@ -2523,7 +2520,7 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .cricket-ball.is-dragging {
   transform: scale(calc(var(--cricket-ball-scale, 1) * 1.10));
 }
-.cricket-game-layer.is-clearing .cricket-ball,
+.cricket-ball-layer.is-clearing .cricket-ball,
 .cricket-game-layer.is-clearing .cricket-stumps,
 .cricket-game-layer.is-clearing .cricket-pitch {
   opacity: 0 !important;
@@ -2564,4 +2561,83 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 }
 .duck.cricket-walkoff .entry-wing-front {
   z-index: 7;
+}
+
+
+/* v1.2-dev.11 verified cricket staging ---------------------------------- */
+.cricket-game-layer {
+  z-index: 2050;
+}
+.cricket-ball-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 3100;
+  pointer-events: none;
+  opacity: 0;
+}
+.cricket-ball-layer.is-active { opacity: 1; }
+.cricket-ball-layer.is-ready .cricket-ball,
+.cricket-ball-layer.is-bowling .cricket-ball { display: block; }
+.cricket-ball-layer.is-clearing .cricket-ball {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.cricket-game-layer.cricket-prewarm,
+.cricket-ball-layer.cricket-prewarm {
+  display: block;
+  visibility: hidden;
+}
+.scene-world.cricket-game-running .duck.cricket-bowler,
+.scene-world.cricket-game-running .duck.cricket-batter {
+  z-index: 2250 !important;
+}
+
+/* One-piece temporary bat: handle and blade rendered as a single object so
+   the swing and walk-off cannot separate visually. */
+.duck.cricket-batter .duck-visual::before {
+  content: none !important;
+}
+.duck.cricket-batter .duck-visual::after {
+  content: \"\";
+  position: absolute;
+  left: 59%;
+  top: 38%;
+  width: 10%;
+  height: 40%;
+  border: 2px solid rgba(47,35,26,.84);
+  border-radius: 3px 3px 6px 6px;
+  background:
+    linear-gradient(to bottom,
+      #332b27 0 19%,
+      #5a4638 19% 27%,
+      #d8ab63 27% 100%);
+  transform: rotate(20deg);
+  transform-origin: 50% 23%;
+  z-index: 11;
+}
+.duck.cricket-batter.cricket-swing .duck-visual::after {
+  animation: cricket-bat-swing-v11 .32s cubic-bezier(.3,.05,.25,1) 1;
+}
+@keyframes cricket-bat-swing-v11 {
+  0% { transform: rotate(20deg); }
+  45% { transform: rotate(-28deg) translate(-2px,1px); }
+  100% { transform: rotate(-12deg); }
+}
+.duck.cricket-walkoff .duck-visual::after {
+  left: 55%;
+  top: 42%;
+  width: 8%;
+  height: 36%;
+  transform: rotate(62deg);
+  transform-origin: 50% 23%;
+  z-index: 5;
+}
+.duck.cricket-walkoff .entry-wing-front { z-index: 7; }
+
+/* Wing tracking stays shoulder-anchored: rotation only. */
+.duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
+  animation: none !important;
+  transform: rotate(var(--cricket-wing-angle, 0deg)) !important;
+  transform-origin: 58% 47% !important;
+  transition: transform .05s linear;
 }

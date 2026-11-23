@@ -83,6 +83,7 @@
     const mobileZoomReset = document.getElementById("mobileZoomReset");
     const cricketGameButton = document.getElementById("cricketGameButton");
     const cricketGameLayer = document.getElementById("cricketGameLayer");
+    const cricketBallLayer = document.getElementById("cricketBallLayer");
     const cricketPitch = document.getElementById("cricketPitch");
     const cricketStumps = document.getElementById("cricketStumps");
     const cricketBall = document.getElementById("cricketBall");
@@ -4633,10 +4634,8 @@
         if (cricketBowler && cricketBallDrag) {
             const dx = x - CRICKET_BOWLER_POS.x;
             const dy = y - CRICKET_BOWLER_POS.y;
-            const distance = Math.hypot(dx, dy);
-            const angle = Math.max(-76, Math.min(76, dx * 3.2 + (dy - 2) * .7));
+            const angle = Math.max(-62, Math.min(62, dx * 2.5 + (dy - 2) * .45));
             cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
-            cricketBowler.style.setProperty("--cricket-wing-reach", `${Math.min(7, distance * .55).toFixed(2)}px`);
             cricketBowler.classList.add("cricket-wing-tracking");
         }
     }
@@ -4645,10 +4644,11 @@
         cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
-        cricketBowler?.style.removeProperty("--cricket-wing-reach");
         cricketGameLayer?.classList.remove("is-bowling");
+        cricketBallLayer?.classList.remove("is-bowling","is-clearing");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
         cricketGameLayer?.classList.add("is-ready");
+        cricketBallLayer?.classList.add("is-active","is-ready");
         cricketState = "ready";
     }
     function cricketWorldPointFromClient(clientX, clientY) {
@@ -4659,30 +4659,22 @@
         };
     }
     function cricketAnimateBall(points, duration) {
-        const sample = (p0, p1, p2, p3, t) => {
-            const t2 = t * t;
-            const t3 = t2 * t;
-            return {
-                x: .5 * ((2*p1.x) + (-p0.x+p2.x)*t + (2*p0.x-5*p1.x+4*p2.x-p3.x)*t2 + (-p0.x+3*p1.x-3*p2.x+p3.x)*t3),
-                y: .5 * ((2*p1.y) + (-p0.y+p2.y)*t + (2*p0.y-5*p1.y+4*p2.y-p3.y)*t2 + (-p0.y+3*p1.y-3*p2.y+p3.y)*t3)
-            };
-        };
         return new Promise(resolve => {
             const started = performance.now();
+            const segments = Math.max(1, points.length - 1);
             const frame = now => {
                 const raw = Math.min(1, (now - started) / duration);
-                const eased = raw < .5
-                    ? 2 * raw * raw
-                    : 1 - Math.pow(-2 * raw + 2, 2) / 2;
-                const scaled = eased * (points.length - 1);
-                const index = Math.min(points.length - 2, Math.floor(scaled));
-                const local = Math.min(1, scaled - index);
-                const p0 = points[Math.max(0,index-1)];
-                const p1 = points[index];
-                const p2 = points[Math.min(points.length-1,index+1)];
-                const p3 = points[Math.min(points.length-1,index+2)];
-                const p = sample(p0,p1,p2,p3,local);
-                cricketSetBallPosition(p.x,p.y);
+                const eased = 1 - Math.pow(1 - raw, 2);
+                const scaled = eased * segments;
+                const index = Math.min(segments - 1, Math.floor(scaled));
+                const local = Math.min(1, Math.max(0, scaled - index));
+                const a = points[index];
+                const b = points[index + 1];
+                const localEase = local * local * (3 - 2 * local);
+                cricketSetBallPosition(
+                    a.x + (b.x - a.x) * localEase,
+                    a.y + (b.y - a.y) * localEase
+                );
                 if (raw < 1) requestAnimationFrame(frame); else resolve();
             };
             requestAnimationFrame(frame);
@@ -4707,6 +4699,8 @@
         cricketState = "bowling";
         cricketGameLayer?.classList.remove("is-ready");
         cricketGameLayer?.classList.add("is-bowling");
+        cricketBallLayer?.classList.remove("is-ready");
+        cricketBallLayer?.classList.add("is-active","is-bowling");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
 
         cricketBowler.classList.add("cricket-bowling");
@@ -4726,6 +4720,7 @@
             cricketScore("BOWLED!", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), "THAT ONE CAME BACK");
             await sleep(1050);
             cricketGameLayer?.classList.add("is-clearing");
+            cricketBallLayer?.classList.add("is-clearing");
             await cricketFinishDismissal();
             return;
         }
@@ -4744,32 +4739,32 @@
 
         const sixTargets = [
             [
-                {x:52.5,y:59.0},{x:49.0,y:56.2},{x:44.5,y:52.8},{x:39.2,y:49.0},
-                {x:33.0,y:46.2},{x:26.0,y:43.9},{x:18.0,y:42.1},{x:-6.0,y:36.0}
+                {x:52.5,y:59.0},{x:48.5,y:55.5},{x:43.0,y:51.0},{x:36.0,y:47.0},
+                {x:28.0,y:43.0},{x:18.0,y:39.5},{x:7.0,y:36.5},{x:-8.0,y:33.5}
             ],
             [
-                {x:52.5,y:59.0},{x:56.8,y:55.8},{x:62.0,y:52.1},{x:68.0,y:48.6},
-                {x:75.0,y:45.8},{x:82.2,y:43.0},{x:88.0,y:41.0},{x:106.0,y:35.0}
+                {x:52.5,y:59.0},{x:57.0,y:55.5},{x:63.0,y:51.0},{x:70.0,y:47.0},
+                {x:78.0,y:43.5},{x:88.0,y:40.0},{x:98.0,y:37.0},{x:108.0,y:34.0}
             ],
             [
-                {x:52.5,y:59.0},{x:50.0,y:53.6},{x:47.2,y:48.0},{x:44.0,y:42.5},
-                {x:40.8,y:37.2},{x:37.4,y:33.1},{x:34.2,y:30.0},{x:24.0,y:15.0}
+                {x:52.5,y:59.0},{x:50.0,y:53.5},{x:47.0,y:47.0},{x:43.5,y:40.5},
+                {x:39.5,y:34.0},{x:35.0,y:28.0},{x:30.0,y:20.0},{x:24.0,y:-6.0}
             ],
             [
-                {x:52.5,y:59.0},{x:55.3,y:53.1},{x:58.8,y:47.0},{x:62.4,y:41.2},
-                {x:65.8,y:36.4},{x:69.0,y:32.4},{x:71.5,y:29.4},{x:79.0,y:14.0}
+                {x:52.5,y:59.0},{x:55.0,y:53.0},{x:58.5,y:46.5},{x:62.5,y:40.0},
+                {x:67.0,y:34.0},{x:72.0,y:28.0},{x:77.0,y:18.0},{x:82.0,y:-6.0}
             ],
             [
-                {x:52.5,y:59.0},{x:51.7,y:53.8},{x:50.6,y:48.0},{x:49.0,y:42.4},
-                {x:47.3,y:37.0},{x:45.5,y:32.4},{x:43.2,y:28.2},{x:38.0,y:12.0}
+                {x:52.5,y:59.0},{x:51.5,y:53.0},{x:50.0,y:46.0},{x:48.0,y:39.0},
+                {x:46.0,y:32.0},{x:44.0,y:24.0},{x:42.0,y:14.0},{x:40.0,y:-6.0}
             ],
             [
-                {x:52.5,y:59.0},{x:50.5,y:63.0},{x:47.5,y:68.0},{x:44.0,y:74.0},
-                {x:40.0,y:81.0},{x:35.0,y:89.0},{x:28.0,y:98.0},{x:18.0,y:108.0}
+                {x:52.5,y:59.0},{x:50.0,y:64.0},{x:47.0,y:70.0},{x:43.0,y:77.0},
+                {x:38.0,y:85.0},{x:32.0,y:94.0},{x:25.0,y:103.0},{x:16.0,y:112.0}
             ],
             [
-                {x:52.5,y:59.0},{x:56.0,y:63.5},{x:61.0,y:69.0},{x:67.0,y:75.0},
-                {x:74.0,y:82.0},{x:82.0,y:90.0},{x:92.0,y:99.0},{x:106.0,y:109.0}
+                {x:52.5,y:59.0},{x:56.0,y:64.0},{x:61.0,y:70.0},{x:67.0,y:77.0},
+                {x:74.0,y:85.0},{x:83.0,y:94.0},{x:94.0,y:103.0},{x:108.0,y:112.0}
             ]
         ];
         const hitPath = sixTargets[Math.floor(Math.random() * sixTargets.length)];
@@ -4785,30 +4780,33 @@
         if (!cricketLincoln?.isConnected)
             return;
 
-        // Swim to the actual base of the pavilion staircase, left of the previous
-        // route, so the change to walking lines up with the visible steps.
-        const STAIR_WATER_POS = { x: 53.8, y: 52.6 };
-        await cricketMoveDuck(cricketLincoln, STAIR_WATER_POS, 2750);
+        const STAIR_WATER_POS = { x: 53.8, y: 50.95 };
+
+        const pitchFadeTimer = setTimeout(() => {
+            cricketPitch?.classList.add("is-gone");
+        }, 1450);
+
+        await cricketMoveDuck(cricketLincoln, STAIR_WATER_POS, 2900);
+        clearTimeout(pitchFadeTimer);
+        cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
         cricketLincoln.classList.add("entrying", "cricket-walkoff");
-        cricketLincoln.style.zIndex = "2900";
+        cricketLincoln.style.zIndex = "4000";
         cricketLincoln.style.opacity = "1";
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
-        // Match the final swim perspective scale at y=52.6 (~.468) so there is no
-        // visible size pop. Stay on the stair run, then shrink toward the doors.
         const pavilionWalk = [
-            {at:0.00,x:53.8,y:52.6,rotation: 0,scale:.468,opacity:1},
-            {at:0.13,x:54.5,y:51.5,rotation:-1,scale:.460,opacity:1},
-            {at:0.27,x:55.4,y:50.1,rotation: 1,scale:.448,opacity:1},
-            {at:0.41,x:56.5,y:48.4,rotation:-1,scale:.432,opacity:1},
-            {at:0.55,x:57.8,y:46.4,rotation: 1,scale:.414,opacity:1},
-            {at:0.69,x:59.2,y:44.2,rotation:-1,scale:.395,opacity:1},
-            {at:0.81,x:60.7,y:42.0,rotation: 1,scale:.378,opacity:1},
-            {at:0.91,x:62.3,y:40.0,rotation: 0,scale:.360,opacity:1},
-            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.340,opacity:0}
+            {at:0.00,x:53.8,y:50.95,rotation: 0,scale:.450,opacity:1},
+            {at:0.14,x:54.6,y:50.0,rotation:-1,scale:.445,opacity:1},
+            {at:0.29,x:55.6,y:48.7,rotation: 1,scale:.434,opacity:1},
+            {at:0.44,x:56.8,y:47.0,rotation:-1,scale:.420,opacity:1},
+            {at:0.58,x:58.2,y:45.0,rotation: 1,scale:.405,opacity:1},
+            {at:0.72,x:59.8,y:42.9,rotation:-1,scale:.389,opacity:1},
+            {at:0.84,x:61.4,y:41.0,rotation: 1,scale:.373,opacity:1},
+            {at:0.93,x:63.0,y:39.4,rotation: 0,scale:.357,opacity:1},
+            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.345,opacity:0}
         ];
 
         let wi = 0;
@@ -4835,27 +4833,35 @@
     }
     async function cricketRestoreFielders() {
         const tasks=[];
+        let index = 0;
         for (const duck of ducks.values()) {
             if (duck === cricketLincoln) continue;
             duck.classList.remove("cricket-selected","cricket-bowler");
             const original=cricketOriginalPositions.get(duck.dataset.duckId);
-            if (original) tasks.push(cricketMoveDuck(duck, original, 2500 + Math.random()*900));
+            if (!original) continue;
+            const stagger = 120 + index * 85;
+            const duration = 4200 + (index % 6) * 300 + Math.random() * 700;
+            tasks.push((async () => {
+                await sleep(stagger);
+                await cricketMoveDuck(duck, original, duration);
+            })());
+            index++;
         }
         await Promise.all(tasks);
     }
     async function cricketFinishDismissal() {
         cricketState="ending";
         cricketGameLayer?.classList.remove("is-ready","is-bowling");
+        cricketBallLayer?.classList.remove("is-ready","is-bowling");
         cricketLincoln?.classList.remove("cricket-swing");
 
-        // Fielders can start heading home while Lincoln walks off.
         const restoringFielders = cricketRestoreFielders();
         await cricketWalkLincolnOff();
 
-        // Lincoln is through the door: cricket presentation is over immediately.
         cricketStumps?.classList.remove("is-bowled");
         cricketPitch?.classList.remove("is-gone");
         cricketGameLayer?.classList.remove("is-active","is-ready","is-clearing");
+        cricketBallLayer?.classList.remove("is-active","is-ready","is-clearing","is-bowling");
         world?.classList.remove("cricket-game-running","cricket-choose-bowler");
 
         cricketState="idle";
@@ -4868,7 +4874,6 @@
         enableSnakeEvent();
         enableRandomFights();
 
-        // Fielders finish returning without keeping the pond in cricket mode.
         await restoringFielders;
 
         for (const duck of ducks.values()) {
@@ -4881,8 +4886,6 @@
             }
         }
 
-        // Lincoln comes back later via the normal pier entry, independent of the
-        // pond already having resumed.
         await sleep(1600);
         if (cricketLincoln?.isConnected) {
             cricketLincoln.style.opacity="1";
@@ -4908,6 +4911,7 @@
         world?.classList.remove("cricket-choose-bowler");
         world?.classList.add("cricket-game-running");
         cricketGameLayer?.classList.add("is-active");
+        cricketBallLayer?.classList.add("is-active");
         cricketPitch?.classList.remove("is-gone");
         cricketOriginalPositions.clear();
         for (const duck of ducks.values()) cricketOriginalPositions.set(duck.dataset.duckId, cricketCurrentPoint(duck));
@@ -4928,11 +4932,14 @@
         const moves=[];
         moves.push(cricketMoveDuck(cricketBowler,CRICKET_BOWLER_POS,2200));
         moves.push(cricketMoveDuck(cricketLincoln,CRICKET_BATTER_POS,2300));
-        fielders.forEach((duck,index)=>moves.push(cricketMoveDuck(duck,CRICKET_FIELD_POSITIONS[index%CRICKET_FIELD_POSITIONS.length],2400+(index%5)*180)));
+        fielders.forEach((duck,index)=>moves.push((async () => {
+            await sleep(index * 28);
+            await cricketMoveDuck(duck,CRICKET_FIELD_POSITIONS[index%CRICKET_FIELD_POSITIONS.length],2400+(index%5)*180);
+        })()));
         cricketScore("SETTING THE FIELD", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), `${bowler.dataset.playerName || "BOWLER"} HAS THE BALL`);
         await Promise.all(moves);
-        cricketBowler.style.zIndex = "2205";
-        cricketLincoln.style.zIndex = "2210";
+        cricketBowler.style.zIndex = "2250";
+        cricketLincoln.style.zIndex = "2250";
         for (const duck of fielders)
             cricketFaceLincoln(duck);
         cricketFaceLincoln(cricketBowler);
@@ -4944,6 +4951,17 @@
         setDuckFace(cricketLincoln,"neutral");
         cricketResetBall();
         cricketScore("LINCOLN WONG", "READY", "PULL BACK & RELEASE");
+    }
+    function prewarmCricketPresentation() {
+        if (!cricketGameLayer || !cricketBallLayer) return;
+        cricketGameLayer.classList.add("cricket-prewarm");
+        cricketBallLayer.classList.add("cricket-prewarm");
+        void cricketGameLayer.offsetWidth;
+        void cricketBallLayer.offsetWidth;
+        requestAnimationFrame(() => {
+            cricketGameLayer.classList.remove("cricket-prewarm");
+            cricketBallLayer.classList.remove("cricket-prewarm");
+        });
     }
     function cricketBeginSelection() {
         if (TV_DISPLAY_BROWSER || cricketState!=="idle" || !ducks.size) return;
@@ -5006,7 +5024,6 @@
         cricketBall.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
-        cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         const dy = event.clientY - cricketBallDrag.startY;
         const dx = event.clientX - cricketBallDrag.startX;
@@ -5148,6 +5165,7 @@
         status.textContent = `${formatClubDate(context.start)}–${formatClubDate(context.end)} loaded. ${pondEvents.length} cumulative ducks are now represented in the pond.`;
         enableSnakeEvent();
         enableRandomFights();
+        prewarmCricketPresentation();
     }
     function disposeDuck(duck) {
         if (!duck)
