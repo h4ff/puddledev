@@ -4710,7 +4710,7 @@
         if (cricketBallScuffed) {
             cricketScore("HERE WE GO", "SCUFFED", "THAT'S MOVING...");
             await cricketAnimateBall([
-                {x:54.0,y:75.8},
+                {x:54.0,y:73.2},
                 {x:54.0,y:71.5},
                 {x:55.4,y:65.2},
                 {x:54.0,y:58.0}
@@ -4725,9 +4725,10 @@
             return;
         }
 
-        // Normal ball: same delivery every time. The user's flick only releases it.
+        // Normal ball: every valid pull-back release starts from the exact
+        // ready point and follows the same scripted delivery.
         await cricketAnimateBall([
-            {x:54.0,y:75.8},
+            {x:54.0,y:73.2},
             {x:54.0,y:71.8},
             {x:53.0,y:65.3},
             {x:52.5,y:58.7}
@@ -5017,30 +5018,60 @@
         cricketBallDrag.lastX=event.clientX;
         cricketBallDrag.lastY=event.clientY;
     });
-    cricketBall?.addEventListener("pointerup", event=>{
-        if (!cricketBallDrag || cricketBallDrag.pointerId!==event.pointerId) return;
-        event.preventDefault();
-        event.stopPropagation();
-        cricketBall.classList.remove("is-dragging");
+    function cricketFinishBallDrag(event, cancelled = false) {
+        if (!cricketBallDrag)
+            return;
+        if (event?.pointerId != null && cricketBallDrag.pointerId !== event.pointerId)
+            return;
+
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+
+        const drag = cricketBallDrag;
+        const ballY = Number(cricketBall?.dataset.y || CRICKET_BALL_READY_POS.y);
+        cricketBallDrag = null;
+
+        cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
+        cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
-        const dy = event.clientY - cricketBallDrag.startY;
-        const dx = event.clientX - cricketBallDrag.startX;
-        const pulledBack = dy > 42 && Math.abs(dx) < Math.max(85, dy * 1.5);
+        try {
+            if (event?.pointerId != null && cricketBall?.hasPointerCapture?.(event.pointerId))
+                cricketBall.releasePointerCapture(event.pointerId);
+        }
+        catch (_error) {}
 
-        cricketBallDrag=null;
+        if (cancelled) {
+            cricketResetBall();
+            return;
+        }
+
+        // Judge the bowl from where the ball actually ended up in world space,
+        // not raw screen pixels. This stays reliable through mobile zoom/scroll.
+        const pulledBack = ballY >= CRICKET_BALL_READY_POS.y + 3.0;
 
         if (pulledBack) {
-            // The amount of pull is intentionally not used for speed yet: it
-            // feels like a charge mechanic, but every valid release follows the
-            // same controlled delivery path.
+            // Always start the scripted delivery from exactly the same ready point.
             cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
             void cricketBowl();
             return;
         }
 
         cricketResetBall();
+    }
+
+    cricketBall?.addEventListener("pointerup", event=>{
+        cricketFinishBallDrag(event, false);
+    });
+    cricketBall?.addEventListener("pointercancel", event=>{
+        cricketFinishBallDrag(event, true);
+    });
+    cricketBall?.addEventListener("lostpointercapture", event=>{
+        // On some mobile browsers capture can be lost without a clean pointerup.
+        // If the drag is still active, treat it as a cancelled gesture and reset.
+        if (cricketBallDrag)
+            cricketFinishBallDrag(event, true);
     });
 
     function populateWeekSelect() {
