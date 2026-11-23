@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.11
+# Duck Pond — v1.2-dev.12
 
 ## v1.0.3 – Smart TV stability
 
@@ -180,3 +180,10 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Makes the post-dismissal redistribution a slower staggered drift rather than a violent simultaneous snap.
 - Resumes normal pond activity as soon as Lincoln reaches the pavilion doors; his later pier re-entry remains independent.
 - Adds a small cricket presentation prewarm and staggers first field-setting starts to reduce the first-play mobile hitch.
+
+## v1.2-dev.12
+
+- Fixes the dev.11 bowling regression where the ball's ready position was y=73.2 but the scripted delivery still began at y=75.8.
+- Every delivery now starts from the exact visible ready position.
+- Pull-back release is judged from the ball's world-space position rather than raw screen-pixel movement, making it reliable through mobile zoom/scroll.
+- Adds pointercancel/lostpointercapture recovery so mobile browsers cannot leave the ball stuck in a drag state.
