@@ -4632,35 +4632,63 @@
         cricketBall.style.setProperty("--cricket-ball-scale", scale.toFixed(3));
 
     }
-    function cricketTrackBowlerWing(clientX, clientY) {
-        if (!cricketBowler) return;
+    function cricketBowlerWingAngleForClient(clientX, clientY) {
+        if (!cricketBowler) return 0;
         const rect = cricketBowler.getBoundingClientRect();
-        if (!rect.width || !rect.height) return;
+        if (!rect.width || !rect.height) return 0;
 
         // The visible front-wing asset's rounded shoulder is at ~38.5%,64.5%
         // of its 512px canvas. The swim stack itself is translated upward 27%.
-        // Convert that exact fixed pivot into screen coordinates, then rotate
-        // the wing so its pointed tip aims directly at the dragged ball.
         const facingRight = cricketBowler.dataset.facing === "right";
-        // The unmirrored asset has its rounded shoulder at x=38.5% and its tip
-        // pointing to the right. A right-facing duck mirrors the whole swim stack,
-        // so the shoulder appears at x=61.5% and the wing's natural direction flips.
         const shoulderXRatio = facingRight ? 0.615 : 0.385;
         const shoulderYRatio = 0.645 - 0.27;
         const shoulderX = rect.left + rect.width * shoulderXRatio;
         const shoulderY = rect.top + rect.height * shoulderYRatio;
         const targetAngle = Math.atan2(clientY - shoulderY, clientX - shoulderX) * 180 / Math.PI;
         const localAngle = facingRight ? 180 - targetAngle : targetAngle;
-        const normalised = ((localAngle + 180) % 360 + 360) % 360 - 180;
-
-        cricketBowler.style.setProperty("--cricket-wing-angle", `${normalised.toFixed(1)}deg`);
+        return ((localAngle + 180) % 360 + 360) % 360 - 180;
+    }
+    function cricketTrackBowlerWing(clientX, clientY) {
+        if (!cricketBowler) return;
+        const angle = cricketBowlerWingAngleForClient(clientX, clientY);
+        cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
         cricketBowler.classList.add("cricket-wing-tracking");
+    }
+    function cricketPlayBowlerWingRelease(startAngle) {
+        if (!cricketBowler || !Number.isFinite(startAngle)) return;
+
+        // Aim a short snap in the direction of the pitch, but deliberately cap
+        // the travel so this reads as a wrist/wing flick rather than a full swing.
+        const worldRect = world.getBoundingClientRect();
+        const pitchClientX = worldRect.left + worldRect.width * 0.54;
+        const pitchClientY = worldRect.top + worldRect.height * 0.68;
+        const pitchAngle = cricketBowlerWingAngleForClient(pitchClientX, pitchClientY);
+        let delta = ((pitchAngle - startAngle + 540) % 360) - 180;
+        delta = Math.max(-28, Math.min(28, delta));
+        const flickAngle = startAngle + delta;
+
+        cricketBowler.style.setProperty("--cricket-wing-release-start", `${startAngle.toFixed(1)}deg`);
+        cricketBowler.style.setProperty("--cricket-wing-release-flick", `${flickAngle.toFixed(1)}deg`);
+        cricketBowler.classList.remove("cricket-wing-release");
+        void cricketBowler.offsetWidth;
+        cricketBowler.classList.add("cricket-wing-release");
+
+        const bowler = cricketBowler;
+        setTimeout(() => {
+            if (!bowler?.isConnected) return;
+            bowler.classList.remove("cricket-wing-release");
+            bowler.style.removeProperty("--cricket-wing-release-start");
+            bowler.style.removeProperty("--cricket-wing-release-flick");
+            bowler.style.removeProperty("--cricket-wing-angle");
+        }, 320);
     }
     function cricketResetBall() {
         cricketBallDrag = null;
         cricketBall?.classList.remove("is-dragging");
-        cricketBowler?.classList.remove("cricket-wing-tracking");
+        cricketBowler?.classList.remove("cricket-wing-tracking","cricket-wing-release");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
+        cricketBowler?.style.removeProperty("--cricket-wing-release-start");
+        cricketBowler?.style.removeProperty("--cricket-wing-release-flick");
         cricketGameLayer?.classList.remove("is-bowling");
         cricketBallLayer?.classList.remove("is-bowling","is-clearing");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
@@ -5102,11 +5130,13 @@
 
         const drag = cricketBallDrag;
         const ballY = Number(cricketBall?.dataset.y || CRICKET_BALL_READY_POS.y);
+        const releaseWingAngle = Number.parseFloat(
+            cricketBowler?.style.getPropertyValue("--cricket-wing-angle") || "NaN"
+        );
         cricketBallDrag = null;
 
         cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
-        cricketBowler?.style.removeProperty("--cricket-wing-angle");
         cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         try {
@@ -5125,12 +5155,15 @@
         const pulledBack = ballY >= CRICKET_BALL_READY_POS.y + 3.0;
 
         if (pulledBack) {
-            // Always start the scripted delivery from exactly the same ready point.
+            // Hold the exact release aim for a beat, flick toward the pitch, then
+            // settle to rest. The rounded shoulder remains the fixed pivot.
+            cricketPlayBowlerWingRelease(releaseWingAngle);
             cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
             void cricketBowl();
             return;
         }
 
+        cricketBowler?.style.removeProperty("--cricket-wing-angle");
         cricketResetBall();
     }
 

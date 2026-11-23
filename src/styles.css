@@ -2639,3 +2639,28 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   transform-origin: 38.5% 64.5% !important;
   transition: transform .04s linear;
 }
+
+
+/* v1.2-dev.18 — bowler release flick ------------------------------------ */
+/* The legacy bowling-wing animation caused a rocking motion. Tracking and
+   release are now the only two cricket-specific wing movements. */
+.duck.cricket-bowler .swim-wing-front {
+  animation: none !important;
+  transform-origin: 38.5% 64.5% !important;
+}
+.duck.cricket-bowler.cricket-wing-release .swim-wing-front {
+  animation: cricket-wing-release-v18 .30s cubic-bezier(.22,.82,.24,1) 1 !important;
+  transform-origin: 38.5% 64.5% !important;
+  transition: none !important;
+}
+@keyframes cricket-wing-release-v18 {
+  0%, 16% {
+    transform: rotate(var(--cricket-wing-release-start, 0deg));
+  }
+  58% {
+    transform: rotate(var(--cricket-wing-release-flick, 0deg));
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
