@@ -4641,13 +4641,16 @@
         // of its 512px canvas. The swim stack itself is translated upward 27%.
         // Convert that exact fixed pivot into screen coordinates, then rotate
         // the wing so its pointed tip aims directly at the dragged ball.
-        const facingLeft = cricketBowler.dataset.facing === "left";
-        const shoulderXRatio = facingLeft ? 0.615 : 0.385;
+        const facingRight = cricketBowler.dataset.facing === "right";
+        // The unmirrored asset has its rounded shoulder at x=38.5% and its tip
+        // pointing to the right. A right-facing duck mirrors the whole swim stack,
+        // so the shoulder appears at x=61.5% and the wing's natural direction flips.
+        const shoulderXRatio = facingRight ? 0.615 : 0.385;
         const shoulderYRatio = 0.645 - 0.27;
         const shoulderX = rect.left + rect.width * shoulderXRatio;
         const shoulderY = rect.top + rect.height * shoulderYRatio;
         const targetAngle = Math.atan2(clientY - shoulderY, clientX - shoulderX) * 180 / Math.PI;
-        const localAngle = facingLeft ? 180 - targetAngle : targetAngle;
+        const localAngle = facingRight ? 180 - targetAngle : targetAngle;
         const normalised = ((localAngle + 180) % 360 + 360) % 360 - 180;
 
         cricketBowler.style.setProperty("--cricket-wing-angle", `${normalised.toFixed(1)}deg`);
@@ -4676,7 +4679,17 @@
         return new Promise(resolve => {
             const started = performance.now();
             const segments = Math.max(1, points.length - 1);
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                const end = points[points.length - 1];
+                if (end) cricketSetBallPosition(end.x, end.y);
+                resolve();
+            };
+            const fallback = setTimeout(finish, duration + 300);
             const frame = now => {
+                if (finished) return;
                 const raw = Math.min(1, (now - started) / duration);
                 const eased = 1 - Math.pow(1 - raw, 2);
                 const scaled = eased * segments;
@@ -4689,7 +4702,11 @@
                     a.x + (b.x - a.x) * localEase,
                     a.y + (b.y - a.y) * localEase
                 );
-                if (raw < 1) requestAnimationFrame(frame); else resolve();
+                if (raw < 1) requestAnimationFrame(frame);
+                else {
+                    clearTimeout(fallback);
+                    finish();
+                }
             };
             requestAnimationFrame(frame);
         });
@@ -4699,14 +4716,26 @@
             const started = performance.now();
             const towardViewer = end.y > start.y;
             const arcHeight = towardViewer ? 15 : 11;
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                cricketSetBallPosition(end.x, end.y);
+                resolve();
+            };
+            const fallback = setTimeout(finish, duration + 300);
             const frame = now => {
+                if (finished) return;
                 const t = Math.min(1, (now - started) / duration);
                 const x = start.x + (end.x - start.x) * t;
                 const baseY = start.y + (end.y - start.y) * t;
                 const y = baseY - (4 * arcHeight * t * (1 - t));
                 cricketSetBallPosition(x, y);
                 if (t < 1) requestAnimationFrame(frame);
-                else resolve();
+                else {
+                    clearTimeout(fallback);
+                    finish();
+                }
             };
             requestAnimationFrame(frame);
         });
