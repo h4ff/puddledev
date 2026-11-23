@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.10
+# Duck Pond — v1.2-dev.11
 
 ## v1.0.3 – Smart TV stability
 
@@ -168,3 +168,15 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Adds ball perspective scaling: smaller away from the viewer, larger toward the viewer.
 - Extends six trajectories off-screen instead of leaving the ball apparently stuck in trees/buildings, including some shots in front of the wicket.
 - Keeps the bowling wing anchored at the shoulder and limits tracking to rotation plus a small reach.
+
+
+## v1.2-dev.11
+
+- Splits the ball into its own top flight layer: pitch/stumps remain below the ducks while the ball stays above foreground banks.
+- Uses a shorter one-piece bat and a smaller, more natural swing.
+- Replaces spline sixes with monotonic segmented trajectories and guarantees every six leaves the world boundary.
+- Keeps ball perspective scaling based on travel toward/away from camera.
+- Moves Lincoln's water exit slightly farther away before the walk transition and keeps his stair walk above foreground at z-index 4000.
+- Makes the post-dismissal redistribution a slower staggered drift rather than a violent simultaneous snap.
+- Resumes normal pond activity as soon as Lincoln reaches the pavilion doors; his later pier re-entry remains independent.
+- Adds a small cricket presentation prewarm and staggers first field-setting starts to reduce the first-play mobile hitch.
