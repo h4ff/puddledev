@@ -4680,6 +4680,24 @@
             requestAnimationFrame(frame);
         });
     }
+    function cricketAnimateHitArc(start, end, duration = 1150) {
+        return new Promise(resolve => {
+            const started = performance.now();
+            const towardViewer = end.y > start.y;
+            const arcHeight = towardViewer ? 15 : 11;
+            const frame = now => {
+                const t = Math.min(1, (now - started) / duration);
+                const x = start.x + (end.x - start.x) * t;
+                const baseY = start.y + (end.y - start.y) * t;
+                const y = baseY - (4 * arcHeight * t * (1 - t));
+                cricketSetBallPosition(x, y);
+                if (t < 1) requestAnimationFrame(frame);
+                else resolve();
+            };
+            requestAnimationFrame(frame);
+        });
+    }
+
     function cricketTauntAfterSix() {
         cricketSixes++;
         const taunts = [
@@ -4739,37 +4757,22 @@
         await sleep(90);
 
         const sixTargets = [
-            [
-                {x:52.5,y:59.0},{x:48.5,y:55.5},{x:43.0,y:51.0},{x:36.0,y:47.0},
-                {x:28.0,y:43.0},{x:18.0,y:39.5},{x:7.0,y:36.5},{x:-8.0,y:33.5}
-            ],
-            [
-                {x:52.5,y:59.0},{x:57.0,y:55.5},{x:63.0,y:51.0},{x:70.0,y:47.0},
-                {x:78.0,y:43.5},{x:88.0,y:40.0},{x:98.0,y:37.0},{x:108.0,y:34.0}
-            ],
-            [
-                {x:52.5,y:59.0},{x:50.0,y:53.5},{x:47.0,y:47.0},{x:43.5,y:40.5},
-                {x:39.5,y:34.0},{x:35.0,y:28.0},{x:30.0,y:20.0},{x:24.0,y:-6.0}
-            ],
-            [
-                {x:52.5,y:59.0},{x:55.0,y:53.0},{x:58.5,y:46.5},{x:62.5,y:40.0},
-                {x:67.0,y:34.0},{x:72.0,y:28.0},{x:77.0,y:18.0},{x:82.0,y:-6.0}
-            ],
-            [
-                {x:52.5,y:59.0},{x:51.5,y:53.0},{x:50.0,y:46.0},{x:48.0,y:39.0},
-                {x:46.0,y:32.0},{x:44.0,y:24.0},{x:42.0,y:14.0},{x:40.0,y:-6.0}
-            ],
-            [
-                {x:52.5,y:59.0},{x:50.0,y:64.0},{x:47.0,y:70.0},{x:43.0,y:77.0},
-                {x:38.0,y:85.0},{x:32.0,y:94.0},{x:25.0,y:103.0},{x:16.0,y:112.0}
-            ],
-            [
-                {x:52.5,y:59.0},{x:56.0,y:64.0},{x:61.0,y:70.0},{x:67.0,y:77.0},
-                {x:74.0,y:85.0},{x:83.0,y:94.0},{x:94.0,y:103.0},{x:108.0,y:112.0}
-            ]
+            {x:-12,y:30},
+            {x:112,y:30},
+            {x:22,y:-10},
+            {x:82,y:-10},
+            {x:48,y:-12},
+            {x:10,y:114},
+            {x:112,y:114}
         ];
-        const hitPath = sixTargets[Math.floor(Math.random() * sixTargets.length)];
-        await cricketAnimateBall(hitPath, 1320);
+        const contact = {x:52.5,y:59.0};
+        const hitTarget = sixTargets[Math.floor(Math.random() * sixTargets.length)];
+
+        // Snap to the exact contact point, then launch immediately on one simple
+        // arc. This avoids the PC build getting stranded at the bat between the
+        // delivery animation and the old multi-segment six trajectory.
+        cricketSetBallPosition(contact.x, contact.y);
+        await cricketAnimateHitArc(contact, hitTarget, 1150);
 
         cricketLincoln.classList.remove("cricket-swing");
         setDuckFace(cricketLincoln, "neutral");
