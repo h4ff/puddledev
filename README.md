@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.12
+# Duck Pond — v1.2-dev.13
 
 ## v1.0.3 – Smart TV stability
 
@@ -187,3 +187,8 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Every delivery now starts from the exact visible ready position.
 - Pull-back release is judged from the ball's world-space position rather than raw screen-pixel movement, making it reliable through mobile zoom/scroll.
 - Adds pointercancel/lostpointercapture recovery so mobile browsers cannot leave the ball stuck in a drag state.
+
+## v1.2-dev.13
+
+- PC-only focused fix: replaces the post-contact multi-segment six trajectory with one simple mathematical arc to an off-screen endpoint.
+- No wing, bat, Lincoln walk-off, layering, fielding or redistribution changes from v1.2-dev.12.
