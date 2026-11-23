@@ -2507,8 +2507,8 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
   animation: none !important;
   transform: rotate(var(--cricket-wing-angle, 0deg)) !important;
-  transform-origin: 58% 47%;
-  transition: transform .06s linear;
+  transform-origin: 38.5% 64.5%;
+  transition: transform .04s linear;
 }
 
 
@@ -2536,8 +2536,8 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
   animation: none !important;
   transform: rotate(var(--cricket-wing-angle, 0deg)) !important;
-  transform-origin: 58% 47% !important;
-  transition: transform .035s linear;
+  transform-origin: 38.5% 64.5% !important;
+  transition: transform .04s linear;
 }
 
 /* Tuck the bat under Lincoln's arm during the walk-off rather than holding the
@@ -2636,6 +2636,6 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
   animation: none !important;
   transform: rotate(var(--cricket-wing-angle, 0deg)) !important;
-  transform-origin: 58% 47% !important;
-  transition: transform .05s linear;
+  transform-origin: 38.5% 64.5% !important;
+  transition: transform .04s linear;
 }

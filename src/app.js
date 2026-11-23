@@ -4631,26 +4631,27 @@
         const scale = Math.max(.48, Math.min(1.42, .55 + (y - 40) * .021));
         cricketBall.style.setProperty("--cricket-ball-scale", scale.toFixed(3));
 
-        if (cricketBowler && cricketBallDrag) {
-            const duckScale = parseFloat(getComputedStyle(cricketBowler).getPropertyValue("--duck-scale")) || 1;
-            const facingLeft = cricketBowler.dataset.facing === "left";
+    }
+    function cricketTrackBowlerWing(clientX, clientY) {
+        if (!cricketBowler) return;
+        const rect = cricketBowler.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
 
-            // The existing wing transform-origin is the fixed shoulder pivot.
-            // Convert that point into pond coordinates, then aim the wing's tip
-            // directly from shoulder to ball. No translation/reach is applied.
-            const frameWorldW = (124 / 1672) * 100 * duckScale;
-            const frameWorldH = (124 / 941) * 100 * duckScale;
-            const shoulderX = CRICKET_BOWLER_POS.x + (0.58 - 0.50) * frameWorldW * (facingLeft ? -1 : 1);
-            const shoulderY = CRICKET_BOWLER_POS.y + (0.47 - 0.27 - 0.50) * frameWorldH;
-            const dxPx = (x - shoulderX) * 1672;
-            const dyPx = (y - shoulderY) * 941;
-            const worldAngle = Math.atan2(dyPx, dxPx) * 180 / Math.PI;
-            const localAngle = facingLeft ? 180 - worldAngle : worldAngle;
-            const normalisedAngle = ((localAngle + 180) % 360 + 360) % 360 - 180;
+        // The visible front-wing asset's rounded shoulder is at ~38.5%,64.5%
+        // of its 512px canvas. The swim stack itself is translated upward 27%.
+        // Convert that exact fixed pivot into screen coordinates, then rotate
+        // the wing so its pointed tip aims directly at the dragged ball.
+        const facingLeft = cricketBowler.dataset.facing === "left";
+        const shoulderXRatio = facingLeft ? 0.615 : 0.385;
+        const shoulderYRatio = 0.645 - 0.27;
+        const shoulderX = rect.left + rect.width * shoulderXRatio;
+        const shoulderY = rect.top + rect.height * shoulderYRatio;
+        const targetAngle = Math.atan2(clientY - shoulderY, clientX - shoulderX) * 180 / Math.PI;
+        const localAngle = facingLeft ? 180 - targetAngle : targetAngle;
+        const normalised = ((localAngle + 180) % 360 + 360) % 360 - 180;
 
-            cricketBowler.style.setProperty("--cricket-wing-angle", `${normalisedAngle.toFixed(1)}deg`);
-            cricketBowler.classList.add("cricket-wing-tracking");
-        }
+        cricketBowler.style.setProperty("--cricket-wing-angle", `${normalised.toFixed(1)}deg`);
+        cricketBowler.classList.add("cricket-wing-tracking");
     }
     function cricketResetBall() {
         cricketBallDrag = null;
@@ -5007,7 +5008,7 @@
         event.stopPropagation();
         cricketBall.setPointerCapture?.(event.pointerId);
         const x=Number(cricketBall.dataset.x||CRICKET_BOWLER_POS.x), y=Number(cricketBall.dataset.y||CRICKET_BOWLER_POS.y);
-        cricketBallDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,startBallX:x,startBallY:y};
+        cricketBallDrag={pointerId:event.pointerId,startX:event.clientX,startY:event.clientY,lastX:event.clientX,lastY:event.clientY,startBallX:x,startBallY:y,wingTracking:false};
         cricketBall.classList.add("is-dragging");
     });
     cricketBall?.addEventListener("pointermove", event=>{
@@ -5017,6 +5018,13 @@
 
         const p = cricketWorldPointFromClient(event.clientX,event.clientY);
         cricketSetBallPosition(p.x,p.y);
+
+        // Start tracking only once the ball has actually been pulled back.
+        // From that moment the wing follows the ball around the fixed shoulder.
+        if (!cricketBallDrag.wingTracking && p.y >= CRICKET_BALL_READY_POS.y + 1.5)
+            cricketBallDrag.wingTracking = true;
+        if (cricketBallDrag.wingTracking)
+            cricketTrackBowlerWing(event.clientX, event.clientY);
 
         const rect=liveScoreboard.getBoundingClientRect();
         const insideScoreboard = event.clientX>=rect.left && event.clientX<=rect.right &&
@@ -5037,7 +5045,8 @@
                 cricketBall.classList.remove("is-dragging");
                 cricketBowler?.classList.remove("cricket-wing-tracking");
                 cricketBowler?.style.removeProperty("--cricket-wing-angle");
-                        try {
+                cricketBowler?.style.removeProperty("--cricket-wing-reach");
+                try {
                     if (activePointerId != null && cricketBall.hasPointerCapture?.(activePointerId))
                         cricketBall.releasePointerCapture(activePointerId);
                 }
@@ -5069,6 +5078,7 @@
         cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
+        cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         try {
             if (event?.pointerId != null && cricketBall?.hasPointerCapture?.(event.pointerId))
