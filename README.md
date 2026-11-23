@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.14
+# Duck Pond — v1.2-dev.15
 
 ## v1.0.3 – Smart TV stability
 
@@ -198,3 +198,10 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Scuffed-ball interaction fix only.
 - As soon as the sandpaper rub completes, the current pointer drag is ended cleanly and the scuffed ball is returned to the ready position.
 - The next grab therefore starts from a fresh pointer/capture state instead of reusing the scoreboard drag.
+
+## v1.2-dev.15
+
+- Wing tracking fix only.
+- The bowler wing now rotates around the existing fixed shoulder pivot so the pointed tip aims geometrically at the dragged ball.
+- Removes the old reach/translation component entirely, so the wing cannot orbit around the duck.
+- Bat, Lincoln walk-off, layering, fielding and ball mechanics are unchanged from v1.2-dev.14.
