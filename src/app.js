@@ -5014,7 +5014,27 @@
             if (cricketRubDistance>=130) {
                 cricketBallScuffed=true;
                 cricketBall.classList.add("is-scuffed");
-                cricketScore("THAT'LL DO", "SCUFFED", "BRING IT BACK & PULL");
+                cricketScore("THAT'LL DO", "SCUFFED", "PULL BACK & RELEASE");
+
+                // Sandpapering is a complete interaction. End this pointer drag
+                // immediately and return the scuffed ball to the ready position
+                // so the next grab always begins from a clean input state.
+                const activePointerId = cricketBallDrag?.pointerId;
+                cricketBallDrag = null;
+                cricketBall.classList.remove("is-dragging");
+                cricketBowler?.classList.remove("cricket-wing-tracking");
+                cricketBowler?.style.removeProperty("--cricket-wing-angle");
+                cricketBowler?.style.removeProperty("--cricket-wing-reach");
+                try {
+                    if (activePointerId != null && cricketBall.hasPointerCapture?.(activePointerId))
+                        cricketBall.releasePointerCapture(activePointerId);
+                }
+                catch (_error) {}
+                cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
+                cricketGameLayer?.classList.add("is-ready");
+                cricketBallLayer?.classList.add("is-active","is-ready");
+                cricketState = "ready";
+                return;
             }
         }
 
