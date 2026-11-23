@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.16
+# Duck Pond — v1.2-dev.17
 
 ## v1.0.3 – Smart TV stability
 
@@ -206,3 +206,9 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Wing tracking only: the front wing now pivots from the actual rounded shoulder of the supplied wing asset (38.5%, 64.5%), not the previous off-art pivot.
 - Tracking is removed from the ball-position function entirely, so it cannot alter bowling/reset state.
 - Tracking starts only once the ball has actually been pulled back, then rotates the wing tip toward the pointer with no translation/reach.
+
+## v1.2-dev.17
+
+- Corrects the wing-tip tracking for the mirrored right-facing swim stack: the rounded shoulder stays fixed and the pointed end now aims at the dragged ball.
+- Adds timeout-backed completion to both delivery and hit-flight animations so a dropped/stalled animation frame cannot leave the ball permanently stranded mid-bowl.
+- No bat, Lincoln walk-off, fielding, redistribution or scoreboard changes.
