@@ -4632,10 +4632,23 @@
         cricketBall.style.setProperty("--cricket-ball-scale", scale.toFixed(3));
 
         if (cricketBowler && cricketBallDrag) {
-            const dx = x - CRICKET_BOWLER_POS.x;
-            const dy = y - CRICKET_BOWLER_POS.y;
-            const angle = Math.max(-62, Math.min(62, dx * 2.5 + (dy - 2) * .45));
-            cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
+            const duckScale = parseFloat(getComputedStyle(cricketBowler).getPropertyValue("--duck-scale")) || 1;
+            const facingLeft = cricketBowler.dataset.facing === "left";
+
+            // The existing wing transform-origin is the fixed shoulder pivot.
+            // Convert that point into pond coordinates, then aim the wing's tip
+            // directly from shoulder to ball. No translation/reach is applied.
+            const frameWorldW = (124 / 1672) * 100 * duckScale;
+            const frameWorldH = (124 / 941) * 100 * duckScale;
+            const shoulderX = CRICKET_BOWLER_POS.x + (0.58 - 0.50) * frameWorldW * (facingLeft ? -1 : 1);
+            const shoulderY = CRICKET_BOWLER_POS.y + (0.47 - 0.27 - 0.50) * frameWorldH;
+            const dxPx = (x - shoulderX) * 1672;
+            const dyPx = (y - shoulderY) * 941;
+            const worldAngle = Math.atan2(dyPx, dxPx) * 180 / Math.PI;
+            const localAngle = facingLeft ? 180 - worldAngle : worldAngle;
+            const normalisedAngle = ((localAngle + 180) % 360 + 360) % 360 - 180;
+
+            cricketBowler.style.setProperty("--cricket-wing-angle", `${normalisedAngle.toFixed(1)}deg`);
             cricketBowler.classList.add("cricket-wing-tracking");
         }
     }
@@ -5024,8 +5037,7 @@
                 cricketBall.classList.remove("is-dragging");
                 cricketBowler?.classList.remove("cricket-wing-tracking");
                 cricketBowler?.style.removeProperty("--cricket-wing-angle");
-                cricketBowler?.style.removeProperty("--cricket-wing-reach");
-                try {
+                        try {
                     if (activePointerId != null && cricketBall.hasPointerCapture?.(activePointerId))
                         cricketBall.releasePointerCapture(activePointerId);
                 }
@@ -5057,7 +5069,6 @@
         cricketBall?.classList.remove("is-dragging");
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
-        cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         try {
             if (event?.pointerId != null && cricketBall?.hasPointerCapture?.(event.pointerId))

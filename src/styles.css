@@ -2535,11 +2535,9 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
    reach translation; never orbit the whole wing around the duck. */
 .duck.cricket-bowler.cricket-wing-tracking .swim-wing-front {
   animation: none !important;
-  transform:
-    rotate(var(--cricket-wing-angle, 0deg))
-    translateY(calc(var(--cricket-wing-reach, 0px) * -1)) !important;
+  transform: rotate(var(--cricket-wing-angle, 0deg)) !important;
   transform-origin: 58% 47% !important;
-  transition: transform .05s linear;
+  transition: transform .035s linear;
 }
 
 /* Tuck the bat under Lincoln's arm during the walk-off rather than holding the
