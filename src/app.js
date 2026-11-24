@@ -3738,11 +3738,6 @@
             appendEntryImage(stack, "entry-hair", walkHair);
         appendEntryImage(stack, "entry-wing entry-wing-rear", walkWingSrc("rear", tone, presentation));
         appendEntryImage(stack, "entry-leg entry-leg-front", walkLegSrc("front", tone));
-        // v1.2-dev.24: when Lincoln walks off after being bowled, carry the same
-        // real bat used at the crease. It sits behind the front wing so it reads
-        // as tucked under his arm rather than as a second/phantom batting bat.
-        if (duck.classList.contains("cricket-walkoff"))
-            appendEntryImage(stack, "entry-layer cricket-walkoff-bat", FIGHT_ASSETS.bat);
         appendEntryImage(stack, "entry-wing entry-wing-front", walkWingSrc("front", tone, presentation));
         const idleFace = duck.dataset.idleFace === "sad" ? "sad" : "neutral";
         appendEntryImage(stack, "entry-face", walkFaceSrc(idleFace, tone));
@@ -3833,6 +3828,14 @@
         wingBack.className = "swim-layer swim-wing-back";
         wingBack.src = swimWingSrc("back", duck.dataset.featherTone, presentation);
         wingBack.alt = "";
+        const cricketRearArm = document.createElement("span");
+        cricketRearArm.className = "cricket-rear-arm";
+        cricketRearArm.setAttribute("aria-hidden", "true");
+        const cricketRearWing = document.createElement("img");
+        cricketRearWing.className = "swim-layer cricket-rear-arm-wing";
+        cricketRearWing.src = swimWingSrc("front", duck.dataset.featherTone, presentation);
+        cricketRearWing.alt = "";
+        cricketRearArm.appendChild(cricketRearWing);
         const body = document.createElement("img");
         body.className = "swim-layer swim-body";
         // Swimming presentation is mutually exclusive: exactly one base body element
@@ -3914,7 +3917,7 @@
             headwear.src = headwearPath;
             headwear.alt = "";
         }
-        stack.append(wingBack, body, wake);
+        stack.append(wingBack, cricketRearArm, body, wake);
         if (prestigeSheen)
             stack.appendChild(prestigeSheen);
         if (showHair)
@@ -4886,7 +4889,7 @@
     function cricketRecordWide() {
         cricketRuns += 1;
         cricketWides += 1;
-        cricketShowInnings("WIDE", "REBOWL");
+        cricketScore("WIDE", "WIDE", `${cricketOverText()} • REBOWL`);
     }
     function cricketSetBatterSwingForContact(contactX) {
         if (!cricketLincoln) return;
@@ -5062,11 +5065,13 @@
         cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
-        // v1.2-dev.24: Lincoln physically leaves the water here. Reuse the pond
-        // splash frames/sound, then switch to the existing walking path. The high
-        // z-index keeps him on top of the stair/pier walking surface; the path,
-        // door timing and disappearance coordinates below are deliberately unchanged.
+        // v1.2-dev.25: make the water exit read clearly before the existing walk
+        // begins. The path, door-open timing and disappearance coordinates remain
+        // exactly as they were; only the visual hand-off and stacking are changed.
+        world?.classList.add("cricket-lincoln-walkoff");
         void createSplashAnimation(STAIR_WATER_POS.x, STAIR_WATER_POS.y, cricketLincoln.dataset.duckType);
+        cricketLincoln.style.opacity = "0";
+        await sleep(240);
         cricketLincoln.classList.add("entrying", "cricket-walkoff");
         cricketLincoln.style.zIndex = "4000";
         cricketLincoln.style.opacity = "1";
@@ -5104,6 +5109,7 @@
         cricketLincoln._walkTimer = null;
         cricketLincoln.style.opacity = "0";
         cricketLincoln.classList.remove("cricket-walkoff");
+        world?.classList.remove("cricket-lincoln-walkoff");
         gangnamDoorCavity?.classList.remove("is-open");
         gangnamStage?.classList.remove("is-active");
     }
@@ -5222,7 +5228,7 @@
             await sleep(index * 28);
             await cricketMoveDuck(duck,CRICKET_FIELD_POSITIONS[index%CRICKET_FIELD_POSITIONS.length],2400+(index%5)*180);
         })()));
-        cricketScore("SETTING THE FIELD", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), `${bowler.dataset.playerName || "BOWLER"} HAS THE BALL`);
+        cricketScore("SETTING THE FIELD", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), `${String(bowler.dataset.playerName || "BOWLER").toUpperCase()} HAS THE BALL`);
         await Promise.all(moves);
         cricketBowler.style.zIndex = "2250";
         cricketLincoln.style.zIndex = "2250";
@@ -5261,9 +5267,8 @@
         const duck=event.target.closest?.(".duck");
         if (!duck || !duckLayer.contains(duck)) return;
 
-        // v1.2-dev.24: the floating Lincoln is now the cricket invitation. The
-        // speech bubble is only exposed after the final weekly entrant splashes
-        // down, and clicking Lincoln starts the existing bowler-selection flow.
+        // v1.2-dev.25: Lincoln and his attached speech bubble are both the cricket
+        // invitation after the final weekly entrant splashes down.
         if (cricketState === "idle" && duck.classList.contains("cricket-challenge")) {
             event.preventDefault();
             event.stopPropagation();
