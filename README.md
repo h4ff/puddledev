@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.19
+# Duck Pond — v1.2-dev.20
 
 ## v1.0.3 – Smart TV stability
 
@@ -231,3 +231,11 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Sixes add six runs and one legal ball. Sandpaper becomes active after four legal deliveries.
 - The bowler's front wing follows the ball through the delivery and returns to normal only when Lincoln hits it or a wide is called.
 - Once scuffed, the ball still launches from the user's slingshot release but then wobbles aggressively and always bends back into Lincoln's stumps.
+
+## v1.2-dev.20
+
+- Shot-direction refinement only.
+- Leg-side legal deliveries are now hit to the leg side 100% of the time.
+- Off-side legal deliveries increasingly favour off-side shots as they get wider, from about 62% just outside the straight band to about 98% at the widest hittable line.
+- Deliveries around middle can still be hit to either side.
+- No slingshot, wide, scoring, scuffing, wing, bat, walk-off or fielding changes.
