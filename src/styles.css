@@ -2816,3 +2816,15 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 .scene-world.cricket-choose-bowler .duck.cricket-challenge {
   cursor: default;
 }
+
+/* v1.2-dev.27 — explicit Lincoln/Verandah walk-off depth ------------------ */
+/* The normal cricket batter rule uses z-index:2250 !important, so inline
+   z-index values cannot beat it. Override that rule explicitly while Lincoln
+   is on the pavilion exit route: above Verandah (2305) on the stairs, then
+   below it once he reaches the top. */
+.scene-world.cricket-game-running .duck.cricket-batter.cricket-walkoff {
+  z-index: 2310 !important;
+}
+.scene-world.cricket-game-running .duck.cricket-batter.cricket-walkoff.cricket-walkoff-behind {
+  z-index: 2290 !important;
+}

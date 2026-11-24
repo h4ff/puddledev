@@ -5065,7 +5065,7 @@
         cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
-        // v1.2-dev.26: the pavilion Verandah is the relevant stair foreground.
+        // v1.2-dev.27: the pavilion Verandah is the relevant stair foreground.
         // Keep Lincoln above it from the water exit through the stair climb, then
         // switch him behind it at the existing top-of-stairs waypoint. The route,
         // door timing and final disappearance coordinates are unchanged.
@@ -5074,7 +5074,6 @@
         cricketLincoln.style.opacity = "0";
         await sleep(240);
         cricketLincoln.classList.add("entrying", "cricket-walkoff");
-        cricketLincoln.style.zIndex = "4000";
         cricketLincoln.style.opacity = "1";
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
@@ -5111,13 +5110,13 @@
         await animateEntrySegment(cricketLincoln, pavilionWalkAboveVerandah, 3696, t => t, "feet");
         // The Verandah stage is z-index 2305. Dropping Lincoln below it here makes
         // the upper pavilion/stair artwork correctly pass in front for the doorway.
-        cricketLincoln.style.zIndex = "2201";
+        cricketLincoln.classList.add("cricket-walkoff-behind");
         await animateEntrySegment(cricketLincoln, pavilionWalkBehindVerandah, 704, t => t, "feet");
 
         clearInterval(cricketLincoln._walkTimer);
         cricketLincoln._walkTimer = null;
         cricketLincoln.style.opacity = "0";
-        cricketLincoln.classList.remove("cricket-walkoff");
+        cricketLincoln.classList.remove("cricket-walkoff", "cricket-walkoff-behind");
         world?.classList.remove("cricket-lincoln-walkoff");
         gangnamDoorCavity?.classList.remove("is-open");
         gangnamStage?.classList.remove("is-active");
