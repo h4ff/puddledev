@@ -2701,17 +2701,17 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 }
 
 .duck.cricket-batter.cricket-swing:not(.cricket-walkoff) .swim-fight-arm {
-  animation: cricket-shoulder-swing-v21 .30s cubic-bezier(.28,.02,.20,1) 1 both !important;
+  animation: cricket-shoulder-swing-v22 .32s cubic-bezier(.22,.02,.18,1) 1 both !important;
 }
 .duck.cricket-batter.cricket-swing:not(.cricket-walkoff) .fight-arm-bat {
-  animation: cricket-real-bat-swing-v21 .30s cubic-bezier(.28,.02,.20,1) 1 both !important;
+  animation: cricket-real-bat-swing-v22 .32s cubic-bezier(.22,.02,.18,1) 1 both !important;
 }
-@keyframes cricket-shoulder-swing-v21 {
+@keyframes cricket-shoulder-swing-v22 {
   0%   { transform: rotate(0deg); }
   55%  { transform: rotate(var(--cricket-bat-shoulder-contact, -8deg)); }
   100% { transform: rotate(var(--cricket-bat-shoulder-follow, -21deg)); }
 }
-@keyframes cricket-real-bat-swing-v21 {
+@keyframes cricket-real-bat-swing-v22 {
   0%   { transform: translate(-50%, -29.2%) rotate(136deg); }
   55%  { transform: translate(-50%, -29.2%) rotate(var(--cricket-bat-contact-angle, 45deg)); }
   100% { transform: translate(-50%, -29.2%) rotate(var(--cricket-bat-follow-angle, 15deg)); }
