@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.24
+# Duck Pond — v1.2-dev.25
 
 ## v1.0.3 – Smart TV stability
 
@@ -259,6 +259,16 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Deep leg-side deliveries add a small extra bat rotation around the existing grip to simulate wrist roll.
 - Slingshot, wides, scoring, scuffing, bowler-wing behaviour, shot-direction logic, walk-off and fielding are unchanged.
 
+
+## v1.2-dev.25
+
+- Reworked Lincoln’s rear batting wing to use a second shoulder-driven front-wing asset behind the body, keeping the wing tips together through the swing.
+- Made the dismissal splash visible before the existing pavilion walk begins.
+- Removed the bat completely once Lincoln leaves the water, including the return walk.
+- Raised the duck layer above the pier foreground for Lincoln’s stair climb without changing the established path, door timing, or disappearance point.
+- Made both Lincoln and the attached “Bowler’s name?” speech bubble clickable.
+- Wide deliveries now show **WIDE** as the main cricket scoreboard message.
+- Bowler names are displayed in capitals during field setup.
 
 ## v1.2-dev.24
 
