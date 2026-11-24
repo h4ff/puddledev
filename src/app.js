@@ -4869,6 +4869,40 @@
         cricketWides += 1;
         cricketShowInnings("WIDE", "REBOWL");
     }
+    function cricketSetBatterSwingForContact(contactX) {
+        if (!cricketLincoln) return;
+        const offset = Math.max(-1, Math.min(1, (contactX - 54.0) / 3.5));
+
+        // The shoulder does the broad swing but stays within a believable range.
+        // Once the ball moves to the leg side, the bat contributes more rotation
+        // around the grip to mimic Lincoln rolling his wrists rather than pulling
+        // the entire wing unnaturally behind him.
+        const shoulderContact = -8 - offset * 18;
+        const shoulderFollow = shoulderContact - 13;
+        const batContact = 45 - offset * 70;
+        const wristExtra = Math.max(0, offset) * 18;
+        const batFollow = batContact - 30 - wristExtra;
+
+        cricketLincoln.style.setProperty('--cricket-bat-shoulder-contact', `${shoulderContact.toFixed(1)}deg`);
+        cricketLincoln.style.setProperty('--cricket-bat-shoulder-follow', `${shoulderFollow.toFixed(1)}deg`);
+        cricketLincoln.style.setProperty('--cricket-bat-contact-angle', `${batContact.toFixed(1)}deg`);
+        cricketLincoln.style.setProperty('--cricket-bat-follow-angle', `${batFollow.toFixed(1)}deg`);
+    }
+    function cricketStartBatterSwing(contactX) {
+        if (!cricketLincoln) return;
+        cricketSetBatterSwingForContact(contactX);
+        cricketLincoln.classList.remove('cricket-swing');
+        void cricketLincoln.offsetWidth;
+        cricketLincoln.classList.add('cricket-swing');
+    }
+    function cricketClearBatterSwing() {
+        if (!cricketLincoln) return;
+        cricketLincoln.classList.remove('cricket-swing');
+        cricketLincoln.style.removeProperty('--cricket-bat-shoulder-contact');
+        cricketLincoln.style.removeProperty('--cricket-bat-shoulder-follow');
+        cricketLincoln.style.removeProperty('--cricket-bat-contact-angle');
+        cricketLincoln.style.removeProperty('--cricket-bat-follow-angle');
+    }
     async function cricketBowl(releasePoint) {
         if (cricketState !== "ready" || !cricketBowler || !cricketLincoln || !releasePoint)
             return;
@@ -4911,15 +4945,22 @@
 
         const contact = {x:line.strikeX, y:line.strikeY};
         const distance = Math.hypot(contact.x - releasePoint.x, contact.y - releasePoint.y);
-        await cricketAnimateStraightBall(releasePoint, contact, Math.max(480, Math.min(900, distance * 24)), true);
+        const deliveryDuration = Math.max(480, Math.min(900, distance * 24));
+
+        // Begin Lincoln's swing before the delivery reaches him. The v21 swing's
+        // contact frame is 55% of its 300ms duration (~165ms), so starting it
+        // 165ms before the ball arrives makes the real bat cross the actual
+        // straight-line strike point at the same instant as the ball.
+        const deliveryPromise = cricketAnimateStraightBall(releasePoint, contact, deliveryDuration, true);
+        await sleep(Math.max(0, deliveryDuration - 165));
+        setDuckFace(cricketLincoln, "maniacal");
+        cricketStartBatterSwing(contact.x);
+        await deliveryPromise;
 
         // The bowler's arm has followed the delivery all the way to Lincoln.
         // The instant Lincoln makes contact, the wing returns to its normal pose.
         cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
-        setDuckFace(cricketLincoln, "maniacal");
-        cricketLincoln.classList.add("cricket-swing");
-        await sleep(90);
 
         const offSideTargets = [
             {x:-12,y:30},
@@ -4962,7 +5003,7 @@
         cricketSetBallPosition(contact.x, contact.y);
         await cricketAnimateHitArc(contact, hitTarget, 1150);
 
-        cricketLincoln.classList.remove("cricket-swing");
+        cricketClearBatterSwing();
         setDuckFace(cricketLincoln, "neutral");
         cricketRecordSix();
         await sleep(650);
@@ -5045,7 +5086,7 @@
         cricketState="ending";
         cricketGameLayer?.classList.remove("is-ready","is-bowling");
         cricketBallLayer?.classList.remove("is-ready","is-bowling");
-        cricketLincoln?.classList.remove("cricket-swing");
+        cricketClearBatterSwing();
 
         const restoringFielders = cricketRestoreFielders();
         await cricketWalkLincolnOff();
@@ -5148,6 +5189,7 @@
         // pond-facing direction from before the game.
         cricketLincoln.dataset.facing = "left";
         buildSwimVisual(cricketLincoln, cricketLincoln.dataset.idleFace || "neutral");
+        cricketClearBatterSwing();
         setDuckFace(cricketLincoln,"neutral");
         cricketResetBall();
         cricketShowInnings("LINCOLN WONG", "PULL BACK & RELEASE");
