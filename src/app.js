@@ -3738,6 +3738,11 @@
             appendEntryImage(stack, "entry-hair", walkHair);
         appendEntryImage(stack, "entry-wing entry-wing-rear", walkWingSrc("rear", tone, presentation));
         appendEntryImage(stack, "entry-leg entry-leg-front", walkLegSrc("front", tone));
+        // v1.2-dev.24: when Lincoln walks off after being bowled, carry the same
+        // real bat used at the crease. It sits behind the front wing so it reads
+        // as tucked under his arm rather than as a second/phantom batting bat.
+        if (duck.classList.contains("cricket-walkoff"))
+            appendEntryImage(stack, "entry-layer cricket-walkoff-bat", FIGHT_ASSETS.bat);
         appendEntryImage(stack, "entry-wing entry-wing-front", walkWingSrc("front", tone, presentation));
         const idleFace = duck.dataset.idleFace === "sad" ? "sad" : "neutral";
         appendEntryImage(stack, "entry-face", walkFaceSrc(idleFace, tone));
@@ -4573,6 +4578,20 @@
     let cricketOriginalPositions = new Map();
     let cricketBallDrag = null;
     let cricketRubDistance = 0;
+    let cricketChallengeReady = false;
+
+    function cricketLincolnPondDuck() {
+        return [...ducks.values()].find(duck => duck.dataset.playerId === CRICKET_LINCOLN_PLAYER_ID) || null;
+    }
+    function cricketRefreshChallengeTrigger() {
+        for (const duck of ducks.values())
+            duck.classList.remove("cricket-challenge");
+        if (!cricketChallengeReady || TV_DISPLAY_BROWSER || cricketState !== "idle")
+            return;
+        const lincoln = cricketLincolnPondDuck();
+        if (lincoln)
+            lincoln.classList.add("cricket-challenge");
+    }
 
     function cricketScore(label, primary, secondary = "") {
         scoreboardMode = "cricket";
@@ -5043,6 +5062,11 @@
         cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
+        // v1.2-dev.24: Lincoln physically leaves the water here. Reuse the pond
+        // splash frames/sound, then switch to the existing walking path. The high
+        // z-index keeps him on top of the stair/pier walking surface; the path,
+        // door timing and disappearance coordinates below are deliberately unchanged.
+        void createSplashAnimation(STAIR_WATER_POS.x, STAIR_WATER_POS.y, cricketLincoln.dataset.duckType);
         cricketLincoln.classList.add("entrying", "cricket-walkoff");
         cricketLincoln.style.zIndex = "4000";
         cricketLincoln.style.opacity = "1";
@@ -5153,6 +5177,8 @@
         cricketBowler=null;
         cricketLincoln=null;
         cricketOriginalPositions.clear();
+        cricketChallengeReady = true;
+        cricketRefreshChallengeTrigger();
     }
     async function cricketArrangeField(bowler) {
         cricketState="setting";
@@ -5227,17 +5253,25 @@
     function cricketBeginSelection() {
         if (TV_DISPLAY_BROWSER || cricketState!=="idle" || !ducks.size) return;
         cricketState="selecting";
+        cricketRefreshChallengeTrigger();
         world?.classList.add("cricket-choose-bowler");
         cricketScore("BOWLER'S NAME?", "CHOOSE BOWLER", "CLICK A DUCK IN THE POND");
     }
-    cricketGameButton?.addEventListener("click", event=>{
-        event.preventDefault();
-        cricketBeginSelection();
-    });
     duckLayer?.addEventListener("click", event=>{
-        if (cricketState!=="selecting") return;
         const duck=event.target.closest?.(".duck");
         if (!duck || !duckLayer.contains(duck)) return;
+
+        // v1.2-dev.24: the floating Lincoln is now the cricket invitation. The
+        // speech bubble is only exposed after the final weekly entrant splashes
+        // down, and clicking Lincoln starts the existing bowler-selection flow.
+        if (cricketState === "idle" && duck.classList.contains("cricket-challenge")) {
+            event.preventDefault();
+            event.stopPropagation();
+            cricketBeginSelection();
+            return;
+        }
+
+        if (cricketState!=="selecting") return;
         event.preventDefault(); event.stopPropagation();
         if (duck.dataset.playerId===CRICKET_LINCOLN_PLAYER_ID) {
             cricketScore("NICE TRY", "NOT LINCOLN", "CHOOSE SOMEONE TO BOWL TO HIM");
@@ -5488,6 +5522,8 @@
         enableSnakeEvent();
         enableRandomFights();
         prewarmCricketPresentation();
+        cricketChallengeReady = true;
+        cricketRefreshChallengeTrigger();
     }
     function disposeDuck(duck) {
         if (!duck)
@@ -5534,6 +5570,7 @@
         nextGlobalCollisionReactionAt = performance.now() + 3000 + Math.random() * 4000;
         nextGlobalIdleWingAt = 0;
         currentLeaderPlayerIds = new Set();
+        cricketChallengeReady = false;
         updateCounts();
         destinationMarker.hidden = true;
         status.textContent = "Pond reset.";
