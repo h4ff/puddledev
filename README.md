@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.21
+# Duck Pond — v1.2-dev.22
 
 ## v1.0.3 – Smart TV stability
 
@@ -249,3 +249,12 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Legal-ball swing timing is contact-driven: the swing starts before the ball arrives and reaches its contact frame when the straight delivery reaches its actual `strikeX`.
 - Shoulder rotation varies with delivery line. Wider leg-side balls add extra bat rotation around the grip to simulate wrist roll without over-rotating the wing.
 - Slingshot, wides, scoring, shot-direction selection, scuffing and bowler-wing mechanics are unchanged.
+
+## v1.2-dev.22
+
+- Batting geometry refinement only.
+- The batting shoulder angle is now solved from Lincoln's actual rendered shoulder position to the actual incoming ball contact point.
+- The shoulder has a much larger natural sweep than v21 and does most of the work getting the real bat onto the ball line.
+- Shoulder travel is clamped only at a natural limit; any remaining angle is transferred to the real bat around its existing grip pivot to simulate wrist roll.
+- Contact timing remains synchronised with the straight-line delivery; the v22 contact pose occurs 176 ms after swing start.
+- No bowling, slingshot, scoring, wides, scuffed-ball, bowler-wing, shot-selection, walk-off or fielding changes.
