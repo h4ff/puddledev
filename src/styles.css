@@ -2718,12 +2718,10 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 }
 
 
-/* v1.2-dev.29 — rear batting wing grip-anchored calibration --------------- */
-/* The rear-wing artwork has its pointed tip at roughly 58%/38% of its 512px
-   canvas. Anchor that real tip to the same grip point used by the bat/front
-   wing, then let the rear arm use the exact same shoulder sweep as the front
-   arm. This makes the two wing tips meet at the handle by construction rather
-   than by guessing a separate rear shoulder position. */
+/* v1.2-dev.30 — rear batting wing root tuck ------------------------------ */
+/* Keep the dev.29 grip/tip anchor exactly fixed, but rotate the real rear-wing
+   artwork around that anchored point so its shoulder/root tucks back beneath
+   Lincoln's torso. The handle meeting point therefore cannot drift. */
 .cricket-rear-arm {
   position: absolute;
   inset: 0;
@@ -2739,7 +2737,7 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   opacity: 1;
   z-index: 1;
   transform-origin: 58% 38%;
-  transform: translate(-53%, 24%) scaleX(-1);
+  transform: translate(-53%, 24%) rotate(18deg) scaleX(-1);
 }
 .duck.cricket-batter:not(.cricket-walkoff) .swim-wing-back {
   opacity: 0 !important;
