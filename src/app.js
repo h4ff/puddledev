@@ -4921,16 +4921,44 @@
         cricketLincoln.classList.add("cricket-swing");
         await sleep(90);
 
-        const sixTargets = [
+        const offSideTargets = [
             {x:-12,y:30},
-            {x:112,y:30},
             {x:22,y:-10},
+            {x:10,y:114}
+        ];
+        const legSideTargets = [
+            {x:112,y:30},
             {x:82,y:-10},
-            {x:48,y:-12},
-            {x:10,y:114},
             {x:112,y:114}
         ];
-        const hitTarget = sixTargets[Math.floor(Math.random() * sixTargets.length)];
+        const straightTargets = [
+            {x:48,y:-12},
+            {x:60,y:-12}
+        ];
+
+        const pickTarget = list => list[Math.floor(Math.random() * list.length)];
+        const lineOffset = contact.x - 54.0;
+        let hitTarget;
+
+        // Lincoln is right-handed and faces left in the cricket setup:
+        // lower-X deliveries are his off side; higher-X deliveries are leg side.
+        // A leg-side ball is always put away leg side. Off-side balls increasingly
+        // favour the off side the wider they are, while balls around middle can go either way.
+        if (lineOffset > 0.65) {
+            hitTarget = pickTarget(legSideTargets);
+        }
+        else if (lineOffset < -0.65) {
+            const offWidth = Math.min(1, Math.abs(lineOffset + 0.65) / (3.5 - 0.65));
+            const offChance = 0.62 + offWidth * 0.36;
+            hitTarget = Math.random() < offChance
+                ? pickTarget(offSideTargets)
+                : pickTarget(straightTargets);
+        }
+        else {
+            const allStraightBallTargets = [...offSideTargets, ...legSideTargets, ...straightTargets];
+            hitTarget = pickTarget(allStraightBallTargets);
+        }
+
         cricketSetBallPosition(contact.x, contact.y);
         await cricketAnimateHitArc(contact, hitTarget, 1150);
 
