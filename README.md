@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.29
+# Duck Pond — v1.2-dev.30
 
 ## v1.0.3 – Smart TV stability
 
@@ -286,6 +286,13 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Pavilion walk-off layering now keeps Lincoln above the Verandah through the stair climb, then switches him behind the Verandah at the existing top-of-stairs waypoint.
 - Removed the dev.25 whole-duck-layer z-index workaround; route, door timing, disappearance and other cricket behaviour are unchanged.
 
+
+
+## v1.2-dev.30
+
+- Rear batting wing only: preserved the dev.29 tip/grip alignment and rotated the rear-wing artwork around that fixed grip point so the shoulder/root tucks farther behind Lincoln's body.
+- Pavilion exit/layering deliberately unchanged.
+- Ball/stump impact layering remains backlog.
 
 ## v1.2-dev.29
 - Rear batting wing now uses the real rear-wing asset anchored by its actual pointed tip to the shared bat/front-wing grip point, and follows the exact front shoulder sweep.
