@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.23
+# Duck Pond — v1.2-dev.24
 
 ## v1.0.3 – Smart TV stability
 
@@ -258,3 +258,14 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Shoulder rotation is substantially larger than dev.21 and interpolates from the actual strikeX.
 - Deep leg-side deliveries add a small extra bat rotation around the existing grip to simulate wrist roll.
 - Slingshot, wides, scoring, scuffing, bowler-wing behaviour, shot-direction logic, walk-off and fielding are unchanged.
+
+
+## v1.2-dev.24
+
+- Adds Lincoln's rear batting wing behind the body and mirrors it so the rear-wing tip follows the same shoulder sweep as the gripping front arm.
+- Keeps the accepted dev.23 front-wing/bat contact calibration unchanged.
+- Adds the normal pond splash animation/sound as Lincoln leaves the water after being bowled.
+- Replaces the walk-off CSS/phantom bat with the same real bat asset used at the crease, tucked behind the front walking wing.
+- Keeps Lincoln above the stair/pier walking surface while preserving the existing pavilion walk path, door-open timing and disappearance point.
+- Removes the fixed cricket button. After the final weekly entrant has landed, a speech bubble appears from the Lincoln already swimming in the pond; clicking him starts the existing bowler-selection flow.
+- No pitch, bowling, scoring, wide, scuffed-ball, shot-direction, fielding, door-path or disappearance behaviour changed.
