@@ -2718,11 +2718,11 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 }
 
 
-/* v1.2-dev.25 — two-wing batting + clean walk-off --------------------------- */
-/* Use the same front-wing artwork for the rear batting arm, but put it in its
-   own shoulder wrapper behind the body. The wrapper follows the exact same
-   shoulder rotation as the gripping arm, so the two wing tips travel together
-   instead of the stock rear wing reading like a tail. */
+/* v1.2-dev.26 — real rear batting wing + correct pavilion depth ---------- */
+/* Use the supplied rear-wing artwork in the dedicated rear shoulder wrapper.
+   It stays behind the body but is deliberately exposed enough to read during
+   the swing. The whole swim stack already handles left/right facing, so this
+   rear asset is not mirrored as a fake front wing. */
 .cricket-rear-arm {
   position: absolute;
   inset: 0;
@@ -2732,13 +2732,13 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   height: 100%;
   opacity: 0;
   pointer-events: none;
-  transform-origin: 40% 58%;
+  transform-origin: 45% 58%;
 }
 .cricket-rear-arm-wing {
   opacity: 1;
   z-index: 1;
-  transform-origin: 40% 58%;
-  transform: scaleX(-1) rotate(-6deg) translate(-6px, 2px);
+  transform-origin: 45% 58%;
+  transform: translate(4px, -2px) rotate(5deg);
 }
 .duck.cricket-batter:not(.cricket-walkoff) .swim-wing-back {
   opacity: 0 !important;
@@ -2748,17 +2748,15 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   animation: none !important;
 }
 .duck.cricket-batter.cricket-swing:not(.cricket-walkoff) .cricket-rear-arm {
-  animation: cricket-rear-shoulder-swing-v25 .30s cubic-bezier(.28,.02,.20,1) 1 both !important;
+  animation: cricket-rear-shoulder-swing-v26 .30s cubic-bezier(.28,.02,.20,1) 1 both !important;
 }
-@keyframes cricket-rear-shoulder-swing-v25 {
-  0%   { transform: rotate(0deg); }
-  55%  { transform: rotate(var(--cricket-bat-shoulder-contact, -8deg)); }
-  100% { transform: rotate(var(--cricket-bat-shoulder-follow, -21deg)); }
+@keyframes cricket-rear-shoulder-swing-v26 {
+  0%   { transform: rotate(4deg) translate(2px, -1px); }
+  55%  { transform: rotate(calc(var(--cricket-bat-shoulder-contact, -8deg) + 10deg)) translate(5px, -2px); }
+  100% { transform: rotate(calc(var(--cricket-bat-shoulder-follow, -21deg) + 12deg)) translate(6px, -1px); }
 }
 
-/* Once Lincoln leaves the water the bat is gone completely. There is no bat
-   in the walking stack, so it cannot bang against his shoulder or reappear on
-   the return walk into the pond. */
+/* Once Lincoln leaves the water the bat is gone completely. */
 .duck.cricket-walkoff .duck-visual::before,
 .duck.cricket-walkoff .duck-visual::after {
   content: none !important;
@@ -2768,12 +2766,9 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
   display: none !important;
 }
 
-/* The pier foreground is a sibling stacking context. Raise the whole duck layer
-   during Lincoln's stair climb so his walking sprite is genuinely above the
-   stair/pier surface; the class exists only for this short walk-off sequence. */
-.scene-world.cricket-lincoln-walkoff .duck-layer {
-  z-index: 2300 !important;
-}
+/* Do not create a duck-layer stacking context during the pavilion walk.
+   Lincoln's own z-index can then sit above the Verandah for the stairs and be
+   lowered behind it at the top-of-stairs waypoint in app.js. */
 
 /* Lincoln replaces the old fixed cricket button. This is a speech cue attached
    to the duck itself, so it moves with him and only exists once weekly entry is

@@ -3833,7 +3833,7 @@
         cricketRearArm.setAttribute("aria-hidden", "true");
         const cricketRearWing = document.createElement("img");
         cricketRearWing.className = "swim-layer cricket-rear-arm-wing";
-        cricketRearWing.src = swimWingSrc("front", duck.dataset.featherTone, presentation);
+        cricketRearWing.src = swimWingSrc("back", duck.dataset.featherTone, presentation);
         cricketRearWing.alt = "";
         cricketRearArm.appendChild(cricketRearWing);
         const body = document.createElement("img");
@@ -5065,9 +5065,10 @@
         cricketPitch?.classList.add("is-gone");
         cricketStopDuck(cricketLincoln);
 
-        // v1.2-dev.25: make the water exit read clearly before the existing walk
-        // begins. The path, door-open timing and disappearance coordinates remain
-        // exactly as they were; only the visual hand-off and stacking are changed.
+        // v1.2-dev.26: the pavilion Verandah is the relevant stair foreground.
+        // Keep Lincoln above it from the water exit through the stair climb, then
+        // switch him behind it at the existing top-of-stairs waypoint. The route,
+        // door timing and final disappearance coordinates are unchanged.
         world?.classList.add("cricket-lincoln-walkoff");
         void createSplashAnimation(STAIR_WATER_POS.x, STAIR_WATER_POS.y, cricketLincoln.dataset.duckType);
         cricketLincoln.style.opacity = "0";
@@ -5078,16 +5079,19 @@
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
-        const pavilionWalk = [
-            {at:0.00,x:53.8,y:50.95,rotation: 0,scale:.450,opacity:1},
-            {at:0.14,x:54.6,y:50.0,rotation:-1,scale:.445,opacity:1},
-            {at:0.29,x:55.6,y:48.7,rotation: 1,scale:.434,opacity:1},
-            {at:0.44,x:56.8,y:47.0,rotation:-1,scale:.420,opacity:1},
-            {at:0.58,x:58.2,y:45.0,rotation: 1,scale:.405,opacity:1},
-            {at:0.72,x:59.8,y:42.9,rotation:-1,scale:.389,opacity:1},
-            {at:0.84,x:61.4,y:41.0,rotation: 1,scale:.373,opacity:1},
-            {at:0.93,x:63.0,y:39.4,rotation: 0,scale:.357,opacity:1},
-            {at:1.00,x:64.6,y:38.1,rotation: 0,scale:.345,opacity:0}
+        const pavilionWalkAboveVerandah = [
+            {at:0.0000,x:53.8,y:50.95,rotation: 0,scale:.450,opacity:1},
+            {at:0.1667,x:54.6,y:50.0,rotation:-1,scale:.445,opacity:1},
+            {at:0.3452,x:55.6,y:48.7,rotation: 1,scale:.434,opacity:1},
+            {at:0.5238,x:56.8,y:47.0,rotation:-1,scale:.420,opacity:1},
+            {at:0.6905,x:58.2,y:45.0,rotation: 1,scale:.405,opacity:1},
+            {at:0.8571,x:59.8,y:42.9,rotation:-1,scale:.389,opacity:1},
+            {at:1.0000,x:61.4,y:41.0,rotation: 1,scale:.373,opacity:1}
+        ];
+        const pavilionWalkBehindVerandah = [
+            {at:0.0000,x:61.4,y:41.0,rotation: 1,scale:.373,opacity:1},
+            {at:0.5625,x:63.0,y:39.4,rotation: 0,scale:.357,opacity:1},
+            {at:1.0000,x:64.6,y:38.1,rotation: 0,scale:.345,opacity:0}
         ];
 
         let wi = 0;
@@ -5103,7 +5107,12 @@
         gangnamStage?.classList.add("is-active");
         gangnamDoorCavity?.classList.add("is-open");
 
-        await animateEntrySegment(cricketLincoln, pavilionWalk, 4400, t => t, "feet");
+        // 84% of the original 4400 ms route reaches the top of the stairs.
+        await animateEntrySegment(cricketLincoln, pavilionWalkAboveVerandah, 3696, t => t, "feet");
+        // The Verandah stage is z-index 2305. Dropping Lincoln below it here makes
+        // the upper pavilion/stair artwork correctly pass in front for the doorway.
+        cricketLincoln.style.zIndex = "2201";
+        await animateEntrySegment(cricketLincoln, pavilionWalkBehindVerandah, 704, t => t, "feet");
 
         clearInterval(cricketLincoln._walkTimer);
         cricketLincoln._walkTimer = null;
