@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.18
+# Duck Pond — v1.2-dev.19
 
 ## v1.0.3 – Smart TV stability
 
@@ -220,3 +220,14 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - On a valid release the wing holds its exact aim briefly, snaps a maximum of 28° toward the pitch, then settles to rest.
 - Removes the old always-on cricket bowling-wing animation that caused the wing to rock independently.
 - No ball, bat, walk-off, fielding, redistribution or scoreboard behaviour changes.
+
+
+## v1.2-dev.19
+
+- Rebuilds bowling as a true slingshot. The ball launches from the actual release point on the line formed by the pull-back angle.
+- Normal deliveries travel in a straight line. A generous striker corridor decides whether Lincoln can hit it; misses are called WIDE and re-bowled.
+- Wides add one run but do not consume a legal ball.
+- Scoreboard now shows innings score and over progress: wickets/runs (for example 0/6) with legal-ball notation (for example 0.1).
+- Sixes add six runs and one legal ball. Sandpaper becomes active after four legal deliveries.
+- The bowler's front wing follows the ball through the delivery and returns to normal only when Lincoln hits it or a wide is called.
+- Once scuffed, the ball still launches from the user's slingshot release but then wobbles aggressively and always bends back into Lincoln's stumps.
