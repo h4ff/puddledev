@@ -5078,9 +5078,8 @@
         buildEntryVisual(cricketLincoln, 1);
         setEntryFace(cricketLincoln, "sad");
 
-        // v1.2-dev.28: keep Lincoln above the Verandah slightly farther onto
-        // the landing before switching depth. This preserves the same route;
-        // only the visual layer-switch point moves later along it.
+        // v1.2-dev.29: keep Lincoln above the Verandah for the entire pavilion
+        // exit. The route is unchanged; there is no depth switch on the landing.
         const pavilionWalkAboveVerandah = [
             {at:0.0000,x:53.8,y:50.95,rotation: 0,scale:.450,opacity:1},
             {at:0.1614,x:54.6,y:50.0,rotation:-1,scale:.445,opacity:1},
@@ -5110,12 +5109,9 @@
         gangnamStage?.classList.add("is-active");
         gangnamDoorCavity?.classList.add("is-open");
 
-        // v1.2-dev.28: switch depth ~120 ms later than dev.27, after Lincoln
-        // has visibly completed the stair climb and stepped onto the landing.
+        // v1.2-dev.29: no layer switch. Lincoln remains above Verandah (2305)
+        // for both segments so there can be no stair-top flicker/pop.
         await animateEntrySegment(cricketLincoln, pavilionWalkAboveVerandah, 3816, t => t, "feet");
-        // The Verandah stage is z-index 2305. Dropping Lincoln below it here makes
-        // the upper pavilion/stair artwork correctly pass in front for the doorway.
-        cricketLincoln.classList.add("cricket-walkoff-behind");
         await animateEntrySegment(cricketLincoln, pavilionWalkBehindVerandah, 584, t => t, "feet");
 
         clearInterval(cricketLincoln._walkTimer);
