@@ -4551,9 +4551,9 @@
     // existing duck movement/face/entry systems so the first DEV pass can prove
     // the joke and interaction before bespoke cricket artwork is produced.
     const CRICKET_LINCOLN_PLAYER_ID = "P043";
-    const CRICKET_BOWLER_POS = { x: 54.0, y: 80.0 };
+    const CRICKET_BOWLER_POS = { x: 52.6, y: 80.0 };
     const CRICKET_BALL_READY_POS = { x: 54.0, y: 73.2 };
-    const CRICKET_BATTER_POS = { x: 54.0, y: 59.9 };
+    const CRICKET_BATTER_POS = { x: 56.0, y: 59.9 };
     const CRICKET_EXIT_WATER_POS = { x: 59.0, y: 51.2 };
     const CRICKET_FIELD_POSITIONS = [
         {x:15,y:61},{x:22,y:54},{x:34,y:51},{x:46,y:50},{x:64,y:50},{x:78,y:53},
@@ -4869,56 +4869,38 @@
         cricketWides += 1;
         cricketShowInnings("WIDE", "REBOWL");
     }
-    function cricketNormaliseAngle(angle) {
-        return ((angle + 180) % 360 + 360) % 360 - 180;
-    }
-    function cricketSolvedBatterShoulderAngle(contactX, contactY = 59.0) {
-        if (!cricketLincoln || !world) return -28;
-
-        const arm = cricketLincoln.querySelector(".swim-fight-arm");
-        if (!arm) return -28;
-
-        const armRect = arm.getBoundingClientRect();
-        const worldRect = world.getBoundingClientRect();
-        if (!armRect.width || !armRect.height || !worldRect.width || !worldRect.height)
-            return -28;
-
-        // v21's real bat is attached at the existing fight grip (5%,62%) and
-        // the whole batting arm pivots at the shoulder (40%,58%). Solve the
-        // shoulder rotation that aims that shoulder->grip vector directly at
-        // the actual point where the incoming ball reaches Lincoln.
-        const shoulderX = armRect.left + armRect.width * .40;
-        const shoulderY = armRect.top + armRect.height * .58;
-        const contactClientX = worldRect.left + worldRect.width * (contactX / 100);
-        const contactClientY = worldRect.top + worldRect.height * (contactY / 100);
-
-        const targetAngle = Math.atan2(
-            contactClientY - shoulderY,
-            contactClientX - shoulderX
-        ) * 180 / Math.PI;
-
-        const restingGripAngle = Math.atan2(.62 - .58, .05 - .40) * 180 / Math.PI;
-        return cricketNormaliseAngle(targetAngle - restingGripAngle);
-    }
     function cricketSetBatterSwingForContact(contactX) {
         if (!cricketLincoln) return;
 
-        const offset = Math.max(-1, Math.min(1, (contactX - 54.0) / 3.5));
-        const solvedShoulder = cricketSolvedBatterShoulderAngle(contactX, 59.0);
+        // Calibrated from the actual cricket artwork rather than DOM geometry.
+        // Three contact poses define the widest hittable off-side ball, middle,
+        // and widest hittable leg-side ball. Interpolate between them from the
+        // straight-line delivery's real strikeX.
+        const anchors = [
+            { x: 50.5, shoulder: 36,  bat: 104, followShoulder: 50,  followBat: 76 },
+            { x: 54.0, shoulder: -28, bat: 46,  followShoulder: -46, followBat: 20 },
+            { x: 57.5, shoulder: -72, bat: -10, followShoulder: -86, followBat: -34 }
+        ];
 
-        // The arm now does the majority of the work. These limits still allow a
-        // much larger sweep than v21, while preventing the shoulder from looking
-        // dislocated on the widest legal deliveries.
-        const shoulderContact = Math.max(-76, Math.min(50, solvedShoulder));
-        const shoulderResidual = cricketNormaliseAngle(solvedShoulder - shoulderContact);
+        const x = Math.max(anchors[0].x, Math.min(anchors[2].x, contactX));
+        const a = x <= anchors[1].x ? anchors[0] : anchors[1];
+        const b = x <= anchors[1].x ? anchors[1] : anchors[2];
+        const t = (x - a.x) / Math.max(.001, b.x - a.x);
+        const lerp = (from, to) => from + (to - from) * t;
 
-        // Once the shoulder reaches its natural limit, pass the remaining angle
-        // into the bat around its existing grip pivot. This is the wrist roll.
-        // A small line-based component keeps off/straight/leg-side bat faces
-        // visually distinct without making the wrist do the whole swing again.
-        const batContact = 46 - offset * 34 + shoulderResidual * .82;
-        const shoulderFollow = Math.max(-88, Math.min(58, shoulderContact - 16));
-        const batFollow = batContact - 24 - Math.max(0, offset) * 14;
+        let shoulderContact = lerp(a.shoulder, b.shoulder);
+        let shoulderFollow = lerp(a.followShoulder, b.followShoulder);
+        let batContact = lerp(a.bat, b.bat);
+        let batFollow = lerp(a.followBat, b.followBat);
+
+        // On the deepest leg-side deliveries the shoulder is already near its
+        // natural limit. Add a little extra rotation at the existing bat grip
+        // to read as a roll of the wrists rather than dislocating the wing.
+        if (x > 55.8) {
+            const wrist = Math.min(1, (x - 55.8) / 1.7);
+            batContact -= wrist * 10;
+            batFollow -= wrist * 14;
+        }
 
         cricketLincoln.style.setProperty('--cricket-bat-shoulder-contact', `${shoulderContact.toFixed(1)}deg`);
         cricketLincoln.style.setProperty('--cricket-bat-shoulder-follow', `${shoulderFollow.toFixed(1)}deg`);
@@ -4984,11 +4966,12 @@
         const distance = Math.hypot(contact.x - releasePoint.x, contact.y - releasePoint.y);
         const deliveryDuration = Math.max(480, Math.min(900, distance * 24));
 
-        // Begin Lincoln's swing before the delivery reaches him. The v22 contact
-        // pose is 55% of a 320ms swing (~176ms), so that calculated shoulder/bat
-        // pose coincides with the incoming ball reaching the strike point.
+        // Begin Lincoln's swing before the delivery reaches him. The v21 swing's
+        // contact frame is 55% of its 300ms duration (~165ms), so starting it
+        // 165ms before the ball arrives makes the real bat cross the actual
+        // straight-line strike point at the same instant as the ball.
         const deliveryPromise = cricketAnimateStraightBall(releasePoint, contact, deliveryDuration, true);
-        await sleep(Math.max(0, deliveryDuration - 176));
+        await sleep(Math.max(0, deliveryDuration - 165));
         setDuckFace(cricketLincoln, "maniacal");
         cricketStartBatterSwing(contact.x);
         await deliveryPromise;
