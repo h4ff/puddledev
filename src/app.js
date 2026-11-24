@@ -4564,7 +4564,10 @@
     let cricketBowler = null;
     let cricketLincoln = null;
     let cricketLincolnWasTemporary = false;
-    let cricketSixes = 0;
+    let cricketRuns = 0;
+    let cricketWickets = 0;
+    let cricketLegalBalls = 0;
+    let cricketWides = 0;
     let cricketBallScuffed = false;
     let cricketClueActive = false;
     let cricketOriginalPositions = new Map();
@@ -4654,33 +4657,110 @@
         cricketBowler.style.setProperty("--cricket-wing-angle", `${angle.toFixed(1)}deg`);
         cricketBowler.classList.add("cricket-wing-tracking");
     }
-    function cricketPlayBowlerWingRelease(startAngle) {
-        if (!cricketBowler || !Number.isFinite(startAngle)) return;
+    function cricketScoreText() {
+        return `${cricketWickets}/${cricketRuns}`;
+    }
+    function cricketOverText() {
+        return `${Math.floor(cricketLegalBalls / 6)}.${cricketLegalBalls % 6}`;
+    }
+    function cricketShowInnings(label = "LINCOLN WONG", message = "PULL BACK & RELEASE") {
+        cricketScore(label, cricketScoreText(), `${cricketOverText()} • ${message}`);
+    }
+    function cricketTrackBowlerWingWorld(x, y) {
+        if (!cricketBowler || !world) return;
+        const rect = world.getBoundingClientRect();
+        const clientX = rect.left + rect.width * (x / 100);
+        const clientY = rect.top + rect.height * (y / 100);
+        cricketTrackBowlerWing(clientX, clientY);
+    }
+    function cricketReleaseLine(releasePoint) {
+        const dx = CRICKET_BALL_READY_POS.x - releasePoint.x;
+        const dy = CRICKET_BALL_READY_POS.y - releasePoint.y;
+        const strikeY = 59.0;
+        const tStrike = Math.abs(dy) > .001 ? (strikeY - releasePoint.y) / dy : Infinity;
+        const strikeX = releasePoint.x + dx * tStrike;
+        const legal = Number.isFinite(strikeX) && tStrike > 0 && strikeX >= 50.5 && strikeX <= 57.5;
 
-        // Aim a short snap in the direction of the pitch, but deliberately cap
-        // the travel so this reads as a wrist/wing flick rather than a full swing.
-        const worldRect = world.getBoundingClientRect();
-        const pitchClientX = worldRect.left + worldRect.width * 0.54;
-        const pitchClientY = worldRect.top + worldRect.height * 0.68;
-        const pitchAngle = cricketBowlerWingAngleForClient(pitchClientX, pitchClientY);
-        let delta = ((pitchAngle - startAngle + 540) % 360) - 180;
-        delta = Math.max(-28, Math.min(28, delta));
-        const flickAngle = startAngle + delta;
-
-        cricketBowler.style.setProperty("--cricket-wing-release-start", `${startAngle.toFixed(1)}deg`);
-        cricketBowler.style.setProperty("--cricket-wing-release-flick", `${flickAngle.toFixed(1)}deg`);
-        cricketBowler.classList.remove("cricket-wing-release");
-        void cricketBowler.offsetWidth;
-        cricketBowler.classList.add("cricket-wing-release");
-
-        const bowler = cricketBowler;
-        setTimeout(() => {
-            if (!bowler?.isConnected) return;
-            bowler.classList.remove("cricket-wing-release");
-            bowler.style.removeProperty("--cricket-wing-release-start");
-            bowler.style.removeProperty("--cricket-wing-release-flick");
-            bowler.style.removeProperty("--cricket-wing-angle");
-        }, 320);
+        // Extend the same straight release vector until it first leaves the world.
+        const candidates = [];
+        if (dy < -.001) candidates.push((-8 - releasePoint.y) / dy);
+        if (dx < -.001) candidates.push((-8 - releasePoint.x) / dx);
+        if (dx > .001) candidates.push((108 - releasePoint.x) / dx);
+        const valid = candidates.filter(t => Number.isFinite(t) && t > 0);
+        const tExit = valid.length ? Math.min(...valid) : Math.max(1, tStrike + 2);
+        const exit = { x: releasePoint.x + dx * tExit, y: releasePoint.y + dy * tExit };
+        return { dx, dy, strikeX, strikeY, tStrike, legal, exit };
+    }
+    function cricketAnimateStraightBall(start, end, duration, trackWing = true) {
+        return new Promise(resolve => {
+            const started = performance.now();
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                cricketSetBallPosition(end.x, end.y);
+                if (trackWing) cricketTrackBowlerWingWorld(end.x, end.y);
+                resolve();
+            };
+            const fallback = setTimeout(finish, duration + 300);
+            const frame = now => {
+                if (finished) return;
+                const t = Math.min(1, (now - started) / duration);
+                const x = start.x + (end.x - start.x) * t;
+                const y = start.y + (end.y - start.y) * t;
+                cricketSetBallPosition(x, y);
+                if (trackWing) cricketTrackBowlerWingWorld(x, y);
+                if (t < 1) requestAnimationFrame(frame);
+                else {
+                    clearTimeout(fallback);
+                    finish();
+                }
+            };
+            requestAnimationFrame(frame);
+        });
+    }
+    function cricketAnimateScuffedBall(releasePoint, duration = 1050) {
+        return new Promise(resolve => {
+            const end = {x:54.0, y:58.0};
+            const dx = CRICKET_BALL_READY_POS.x - releasePoint.x;
+            const dy = CRICKET_BALL_READY_POS.y - releasePoint.y;
+            const mag = Math.max(.001, Math.hypot(dx, dy));
+            const ux = dx / mag;
+            const uy = dy / mag;
+            // First control point honours the user's slingshot aim before the
+            // scuffed ball starts behaving absurdly and bending back to Lincoln.
+            const p1 = {x:releasePoint.x + ux * 8.5, y:releasePoint.y + uy * 8.5};
+            const p2 = {x:52.0, y:64.0};
+            const started = performance.now();
+            let finished = false;
+            const finish = () => {
+                if (finished) return;
+                finished = true;
+                cricketSetBallPosition(end.x, end.y);
+                cricketTrackBowlerWingWorld(end.x, end.y);
+                resolve();
+            };
+            const fallback = setTimeout(finish, duration + 300);
+            const frame = now => {
+                if (finished) return;
+                const t = Math.min(1, (now - started) / duration);
+                const u = 1 - t;
+                let x = u*u*u*releasePoint.x + 3*u*u*t*p1.x + 3*u*t*t*p2.x + t*t*t*end.x;
+                let y = u*u*u*releasePoint.y + 3*u*u*t*p1.y + 3*u*t*t*p2.y + t*t*t*end.y;
+                // Decaying lateral chaos: very visible in flight, exactly zero at the stumps.
+                const chaos = (1 - t) * (Math.sin(t * Math.PI * 8) * 3.1 + Math.sin(t * Math.PI * 17) * 1.15);
+                x += chaos;
+                y += Math.sin(t * Math.PI * 11) * (1 - t) * .8;
+                cricketSetBallPosition(x, y);
+                cricketTrackBowlerWingWorld(x, y);
+                if (t < 1) requestAnimationFrame(frame);
+                else {
+                    clearTimeout(fallback);
+                    finish();
+                }
+            };
+            requestAnimationFrame(frame);
+        });
     }
     function cricketResetBall() {
         cricketBallDrag = null;
@@ -4769,8 +4849,10 @@
         });
     }
 
-    function cricketTauntAfterSix() {
-        cricketSixes++;
+    function cricketRecordSix() {
+        cricketRuns += 6;
+        cricketLegalBalls += 1;
+        cricketClueActive = cricketLegalBalls >= 4;
         const taunts = [
             "THAT'S GONE.",
             "TOO EASY.",
@@ -4779,34 +4861,35 @@
             "HE'S WAITING FOR IT.",
             "SANDPAPER. JUST SAYING."
         ];
-        cricketClueActive = cricketSixes >= 4;
-        cricketScore("LINCOLN: SIX", `${cricketSixes}/6`, taunts[(cricketSixes - 1) % taunts.length]);
+        const message = taunts[Math.min(taunts.length - 1, Math.max(0, cricketLegalBalls - 1))];
+        cricketShowInnings("LINCOLN: SIX", message);
     }
-    async function cricketBowl() {
-        if (cricketState !== "ready" || !cricketBowler || !cricketLincoln)
+    function cricketRecordWide() {
+        cricketRuns += 1;
+        cricketWides += 1;
+        cricketShowInnings("WIDE", "REBOWL");
+    }
+    async function cricketBowl(releasePoint) {
+        if (cricketState !== "ready" || !cricketBowler || !cricketLincoln || !releasePoint)
             return;
         cricketState = "bowling";
         cricketGameLayer?.classList.remove("is-ready");
         cricketGameLayer?.classList.add("is-bowling");
         cricketBallLayer?.classList.remove("is-ready");
         cricketBallLayer?.classList.add("is-active","is-bowling");
-        cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
-
-        cricketBowler.classList.add("cricket-bowling");
-        setTimeout(() => cricketBowler?.classList.remove("cricket-bowling"), 520);
-        await sleep(180);
+        cricketSetBallPosition(releasePoint.x, releasePoint.y);
+        cricketTrackBowlerWingWorld(releasePoint.x, releasePoint.y);
 
         if (cricketBallScuffed) {
-            cricketScore("HERE WE GO", "SCUFFED", "THAT'S MOVING...");
-            await cricketAnimateBall([
-                {x:54.0,y:73.2},
-                {x:54.0,y:71.5},
-                {x:55.4,y:65.2},
-                {x:54.0,y:58.0}
-            ], 920);
+            cricketShowInnings("SCUFFED", "WHAT IS THAT DOING?");
+            await cricketAnimateScuffedBall(releasePoint, 1050);
+            cricketLegalBalls += 1;
+            cricketWickets += 1;
             cricketStumps?.classList.add("is-bowled");
             setDuckFace(cricketLincoln, "sad");
-            cricketScore("BOWLED!", displayPlayerName(playerById(CRICKET_LINCOLN_PLAYER_ID)), "THAT ONE CAME BACK");
+            cricketBowler?.classList.remove("cricket-wing-tracking");
+            cricketBowler?.style.removeProperty("--cricket-wing-angle");
+            cricketScore("BOWLED!", cricketScoreText(), `${cricketOverText()} • THAT ONE CAME BACK`);
             await sleep(1050);
             cricketGameLayer?.classList.add("is-clearing");
             cricketBallLayer?.classList.add("is-clearing");
@@ -4814,15 +4897,26 @@
             return;
         }
 
-        // Normal ball: every valid pull-back release starts from the exact
-        // ready point and follows the same scripted delivery.
-        await cricketAnimateBall([
-            {x:54.0,y:73.2},
-            {x:54.0,y:71.8},
-            {x:53.0,y:65.3},
-            {x:52.5,y:58.7}
-        ], 900);
+        const line = cricketReleaseLine(releasePoint);
+        if (!line.legal) {
+            const distance = Math.hypot(line.exit.x - releasePoint.x, line.exit.y - releasePoint.y);
+            await cricketAnimateStraightBall(releasePoint, line.exit, Math.max(520, Math.min(1050, distance * 15)), true);
+            cricketRecordWide();
+            cricketBowler?.classList.remove("cricket-wing-tracking");
+            cricketBowler?.style.removeProperty("--cricket-wing-angle");
+            await sleep(520);
+            cricketResetBall();
+            return;
+        }
 
+        const contact = {x:line.strikeX, y:line.strikeY};
+        const distance = Math.hypot(contact.x - releasePoint.x, contact.y - releasePoint.y);
+        await cricketAnimateStraightBall(releasePoint, contact, Math.max(480, Math.min(900, distance * 24)), true);
+
+        // The bowler's arm has followed the delivery all the way to Lincoln.
+        // The instant Lincoln makes contact, the wing returns to its normal pose.
+        cricketBowler?.classList.remove("cricket-wing-tracking");
+        cricketBowler?.style.removeProperty("--cricket-wing-angle");
         setDuckFace(cricketLincoln, "maniacal");
         cricketLincoln.classList.add("cricket-swing");
         await sleep(90);
@@ -4836,18 +4930,13 @@
             {x:10,y:114},
             {x:112,y:114}
         ];
-        const contact = {x:52.5,y:59.0};
         const hitTarget = sixTargets[Math.floor(Math.random() * sixTargets.length)];
-
-        // Snap to the exact contact point, then launch immediately on one simple
-        // arc. This avoids the PC build getting stranded at the bat between the
-        // delivery animation and the old multi-segment six trajectory.
         cricketSetBallPosition(contact.x, contact.y);
         await cricketAnimateHitArc(contact, hitTarget, 1150);
 
         cricketLincoln.classList.remove("cricket-swing");
         setDuckFace(cricketLincoln, "neutral");
-        cricketTauntAfterSix();
+        cricketRecordSix();
         await sleep(650);
         cricketResetBall();
     }
@@ -4979,6 +5068,14 @@
     }
     async function cricketArrangeField(bowler) {
         cricketState="setting";
+        cricketRuns=0;
+        cricketWickets=0;
+        cricketLegalBalls=0;
+        cricketWides=0;
+        cricketBallScuffed=false;
+        cricketClueActive=false;
+        cricketRubDistance=0;
+        cricketBall?.classList.remove("is-scuffed");
         disableSnakeEvent();
         disableRandomFights();
         cancelArmedFight({resumeScoot:false});
@@ -5025,7 +5122,7 @@
         buildSwimVisual(cricketLincoln, cricketLincoln.dataset.idleFace || "neutral");
         setDuckFace(cricketLincoln,"neutral");
         cricketResetBall();
-        cricketScore("LINCOLN WONG", "READY", "PULL BACK & RELEASE");
+        cricketShowInnings("LINCOLN WONG", "PULL BACK & RELEASE");
     }
     function prewarmCricketPresentation() {
         if (!cricketGameLayer || !cricketBallLayer) return;
@@ -5092,7 +5189,7 @@
             if (cricketRubDistance>=130) {
                 cricketBallScuffed=true;
                 cricketBall.classList.add("is-scuffed");
-                cricketScore("THAT'LL DO", "SCUFFED", "PULL BACK & RELEASE");
+                cricketShowInnings("THAT'LL DO", "SCUFFED — PULL BACK & RELEASE");
 
                 // Sandpapering is a complete interaction. End this pointer drag
                 // immediately and return the scuffed ball to the ready position
@@ -5129,14 +5226,14 @@
         event?.stopPropagation?.();
 
         const drag = cricketBallDrag;
-        const ballY = Number(cricketBall?.dataset.y || CRICKET_BALL_READY_POS.y);
-        const releaseWingAngle = Number.parseFloat(
-            cricketBowler?.style.getPropertyValue("--cricket-wing-angle") || "NaN"
-        );
+        const releasePoint = {
+            x: Number(cricketBall?.dataset.x || CRICKET_BALL_READY_POS.x),
+            y: Number(cricketBall?.dataset.y || CRICKET_BALL_READY_POS.y)
+        };
+        const ballY = releasePoint.y;
         cricketBallDrag = null;
 
         cricketBall?.classList.remove("is-dragging");
-        cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-reach");
 
         try {
@@ -5155,14 +5252,13 @@
         const pulledBack = ballY >= CRICKET_BALL_READY_POS.y + 3.0;
 
         if (pulledBack) {
-            // Hold the exact release aim for a beat, flick toward the pitch, then
-            // settle to rest. The rounded shoulder remains the fixed pivot.
-            cricketPlayBowlerWingRelease(releaseWingAngle);
-            cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
-            void cricketBowl();
+            // True slingshot: launch from the actual release point on the angle
+            // created by pulling away from the original ready position.
+            void cricketBowl(releasePoint);
             return;
         }
 
+        cricketBowler?.classList.remove("cricket-wing-tracking");
         cricketBowler?.style.removeProperty("--cricket-wing-angle");
         cricketResetBall();
     }
