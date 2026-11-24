@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.20
+# Duck Pond — v1.2-dev.21
 
 ## v1.0.3 – Smart TV stability
 
@@ -232,10 +232,20 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - The bowler's front wing follows the ball through the delivery and returns to normal only when Lincoln hits it or a wide is called.
 - Once scuffed, the ball still launches from the user's slingshot release but then wobbles aggressively and always bends back into Lincoln's stumps.
 
-## v1.2-dev.20
+## v1.2-dev.21
 
 - Shot-direction refinement only.
 - Leg-side legal deliveries are now hit to the leg side 100% of the time.
 - Off-side legal deliveries increasingly favour off-side shots as they get wider, from about 62% just outside the straight band to about 98% at the widest hittable line.
 - Deliveries around middle can still be hit to either side.
 - No slingshot, wide, scoring, scuffing, wing, bat, walk-off or fielding changes.
+
+
+## v1.2-dev.21
+
+- Replaces Lincoln's temporary CSS bat with the existing real `assets/events/fight/bat.png` artwork.
+- Uses an inverted copy of Lincoln's real front wing as the batting arm, with the bat layered behind the wing at the grip.
+- The batting pose is present immediately at the crease; there is no fight-style draw/reveal transition.
+- Legal-ball swing timing is contact-driven: the swing starts before the ball arrives and reaches its contact frame when the straight delivery reaches its actual `strikeX`.
+- Shoulder rotation varies with delivery line. Wider leg-side balls add extra bat rotation around the grip to simulate wrist roll without over-rotating the wing.
+- Slingshot, wides, scoring, shot-direction selection, scuffing and bowler-wing mechanics are unchanged.
