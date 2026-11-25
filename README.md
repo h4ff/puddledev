@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.34
+# Duck Pond — v1.2-dev.35
 
 ## v1.0.3 – Smart TV stability
 
@@ -332,3 +332,8 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Doubles Lincoln challenge and gameplay speech text (24px/26px), bubble padding, width limits and tail size; centres both bubble types over their existing speaker anchor, retaining the clickable challenge and speech behaviour.
 - Corrects the shared rear walking leg pivot to the actual upper attachment on the 512px source canvas and removes the rear-leg per-step translations, retaining the existing male/female stride rotations and rear-body layering. This applies wherever the shared entry walk is used.
 - No changes to game logic, scoreboard, ball flight, batting wing, pavilion path/depth or assets. Ball/stump impact layering remains in the backlog.
+
+## v1.2-dev.35
+- Uses the supplied transparent 100×100 new and scuffed cricket ball PNGs. The visible artwork is scaled to match the existing 24px/28px ball, retaining perspective scaling and the enlarged invisible touch target. Both images are preloaded.
+- On a scuffed wicket delivery, the ball layer drops below Lincoln on its final approach while staying above the pitch and stumps. Restores normal depth on reset and dismissal cleanup. Existing ball paths, wicket timing, splash, score, batting wings and pavilion exit remain unchanged.
+- Addresses the wicket ball layering backlog; requires visual confirmation on the pond.

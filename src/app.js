@@ -967,6 +967,8 @@
             "assets/scene/foreground-near-bank.png",
             "assets/scene/foreground-reeds.png",
             "assets/scene/pier-foreground.png",
+            "assets/events/cricket/NewBall100x100.png",
+            "assets/events/cricket/ScuffedBall100x100.png",
             "assets/gangnam/DoorCavity.png",
             "assets/gangnam/Verandah.png",
             "assets/gangnam/FrontWingGangnam.png",
@@ -4807,6 +4809,14 @@
         });
     }
     function cricketAnimateScuffedBall(releasePoint, duration = 1050) {
+        // Keep the ball above the bowler on release. Once it approaches the
+        // batter, lower its parent layer (not the button within that layer).
+        // It remains above the pitch/stumps and behind Lincoln until dismissal.
+        const setWicketBallPosition = (x, y) => {
+            if (y <= CRICKET_BATTER_POS.y + 6)
+                cricketBallLayer?.classList.add("is-behind-batter");
+            cricketSetBallPosition(x, y);
+        };
         return new Promise(resolve => {
             const end = {x:54.0, y:58.0};
             const dx = CRICKET_BALL_READY_POS.x - releasePoint.x;
@@ -4823,7 +4833,7 @@
             const finish = () => {
                 if (finished) return;
                 finished = true;
-                cricketSetBallPosition(end.x, end.y);
+                setWicketBallPosition(end.x, end.y);
                 cricketTrackBowlerWingWorld(end.x, end.y);
                 resolve();
             };
@@ -4838,7 +4848,7 @@
                 const chaos = (1 - t) * (Math.sin(t * Math.PI * 8) * 3.1 + Math.sin(t * Math.PI * 17) * 1.15);
                 x += chaos;
                 y += Math.sin(t * Math.PI * 11) * (1 - t) * .8;
-                cricketSetBallPosition(x, y);
+                setWicketBallPosition(x, y);
                 cricketTrackBowlerWingWorld(x, y);
                 if (t < 1) requestAnimationFrame(frame);
                 else {
@@ -4857,7 +4867,7 @@
         cricketBowler?.style.removeProperty("--cricket-wing-release-start");
         cricketBowler?.style.removeProperty("--cricket-wing-release-flick");
         cricketGameLayer?.classList.remove("is-bowling");
-        cricketBallLayer?.classList.remove("is-bowling","is-clearing");
+        cricketBallLayer?.classList.remove("is-bowling","is-clearing","is-behind-batter");
         cricketSetBallPosition(CRICKET_BALL_READY_POS.x, CRICKET_BALL_READY_POS.y);
         cricketGameLayer?.classList.add("is-ready");
         cricketBallLayer?.classList.add("is-active","is-ready");
@@ -5015,7 +5025,7 @@
         cricketClearSpeech();
         cricketGameLayer?.classList.remove("is-ready");
         cricketGameLayer?.classList.add("is-bowling");
-        cricketBallLayer?.classList.remove("is-ready");
+        cricketBallLayer?.classList.remove("is-ready","is-behind-batter");
         cricketBallLayer?.classList.add("is-active","is-bowling");
         cricketSetBallPosition(releasePoint.x, releasePoint.y);
         cricketTrackBowlerWingWorld(releasePoint.x, releasePoint.y);
@@ -5275,7 +5285,7 @@
         cricketStumps?.classList.remove("is-bowled");
         cricketPitch?.classList.remove("is-gone");
         cricketGameLayer?.classList.remove("is-active","is-ready","is-clearing");
-        cricketBallLayer?.classList.remove("is-active","is-ready","is-clearing","is-bowling");
+        cricketBallLayer?.classList.remove("is-active","is-ready","is-clearing","is-bowling","is-behind-batter");
         world?.classList.remove("cricket-game-running","cricket-choose-bowler");
 
         cricketState="idle";
