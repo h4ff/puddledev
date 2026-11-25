@@ -4583,17 +4583,42 @@
     let cricketRubDistance = 0;
     let cricketChallengeReady = false;
     let cricketSpeechTimer = null;
-    const CRICKET_RANDOM_SLEDGES = [
-        "THAT'S GONE!", "TOO EASY!", "IS THAT ALL YOU'VE GOT?",
-        "CHECK THE BOUNDARY!", "I COULD DO THIS ALL DAY!",
-        "NICE WARM-UP BALL!", "BOWL IT AGAIN!", "DON'T BOTHER CHASING THAT!",
-        "WHERE'S THE REAL BOWLER?", "THANKS FOR COMING!"
-    ];
-    let cricketSledgePool = [];
+    // Scoreboard helps the bowler; Lincoln reacts independently to the result.
+    const CRICKET_MESSAGES = {
+        encouragement: [
+            "TRY A DIFFERENT LINE.", "YOU'VE GOT THIS!", "MAYBE A LITTLE QUICKER?",
+            "TRY A DIFFERENT LENGTH.", "SURELY THE NEXT ONE.", "DON'T GIVE UP!",
+            "HAVE YOU TRIED SPIN?", "AIM FOR THE STUMPS.", "CHANGE YOUR ANGLE.", "KEEP BELIEVING!"
+        ],
+        six: [
+            "Fetch that!", "Thanks for coming.", "My grandma bowls quicker.",
+            "That's in the car park!", "Is that all you've got?", "Don't bother chasing that.",
+            "I've seen better in the thirds.", "Too easy, champ.",
+            "Hope you've got another ball.", "You're making me look good."
+        ],
+        wide: [
+            "I'm over here, mate!", "Wrong postcode.", "Nearly hit a duck!",
+            "Bowling to someone else?", "Get your eyes checked.", "The pitch is over here!"
+        ],
+        bowled: [
+            "Good pill.", "What was that?!", "Must've hit a crack.", "I wasn't ready!",
+            "Lucky ball, mate.", "That kept low!", "How'd that get through?!"
+        ]
+    };
+    const CRICKET_SPEECH_MS = 2100;
+    let cricketMessagePools = {};
+    let cricketLastMessages = {};
 
-    function cricketRandomSledge() {
-        if (!cricketSledgePool.length) cricketSledgePool = CRICKET_RANDOM_SLEDGES.slice();
-        return cricketSledgePool.splice(Math.floor(Math.random() * cricketSledgePool.length), 1)[0];
+    function cricketRandomMessage(kind) {
+        let pool = cricketMessagePools[kind];
+        if (!pool?.length) pool = cricketMessagePools[kind] = CRICKET_MESSAGES[kind].slice();
+        // Avoid repeating a message even when its independent pool refills.
+        const choices = pool.map((message, index) => ({message, index}))
+            .filter(item => item.message !== cricketLastMessages[kind] || pool.length === 1);
+        const {index} = choices[Math.floor(Math.random() * choices.length)];
+        const message = pool.splice(index, 1)[0];
+        cricketLastMessages[kind] = message;
+        return message;
     }
     function cricketClearSpeech() {
         clearTimeout(cricketSpeechTimer);
@@ -4607,7 +4632,7 @@
         cricketLincoln.dataset.cricketSpeech = message;
         cricketLincoln.classList.add("cricket-speech");
         if (persistent) cricketLincoln.classList.add("cricket-next-bowler");
-        else cricketSpeechTimer = setTimeout(cricketClearSpeech, 2100);
+        else cricketSpeechTimer = setTimeout(cricketClearSpeech, CRICKET_SPEECH_MS);
     }
 
     function cricketLincolnPondDuck() {
@@ -4917,16 +4942,18 @@
         cricketClueActive = cricketLegalBalls >= 4;
         const ballInOver = (cricketLegalBalls - 1) % 6 + 1;
         const message = ballInOver === 2 ? "NEED SOME HELP?"
-            : ballInOver === 4 ? "NEED SOME SANDPAPER?"
-            : ballInOver === 6 ? "SERIOUSLY, TRY SOME SANDPAPER!"
-            : cricketRandomSledge();
+            : ballInOver === 3 ? "HAVE YOU TRIED SANDPAPER?"
+            : ballInOver === 5 ? "SERIOUSLY, TRY SOME SANDPAPER!"
+            : cricketRandomMessage("encouragement");
         cricketShowInnings("LINCOLN: SIX", message);
-        if (ballInOver !== 6) cricketSpeak(message);
+        cricketSpeak(cricketRandomMessage("six"));
+        return message;
     }
     function cricketRecordWide() {
         cricketRuns += 1;
         cricketWides += 1;
         cricketScore("WIDE", "WIDE", `${cricketOverText()} • REBOWL`);
+        cricketSpeak(cricketRandomMessage("wide"));
     }
     function cricketSetBatterSwingForContact(contactX) {
         if (!cricketLincoln) return;
@@ -5002,8 +5029,9 @@
             setDuckFace(cricketLincoln, "sad");
             cricketBowler?.classList.remove("cricket-wing-tracking");
             cricketBowler?.style.removeProperty("--cricket-wing-angle");
-            cricketScore("BOWLED!", cricketScoreText(), `${cricketOverText()} • THAT ONE CAME BACK`);
-            await sleep(1050);
+            cricketScore("BOWLED!", "GOT HIM!", `${cricketOverText()} • ${cricketScoreText()}`);
+            cricketSpeak(cricketRandomMessage("bowled"));
+            await sleep(CRICKET_SPEECH_MS);
             cricketGameLayer?.classList.add("is-clearing");
             cricketBallLayer?.classList.add("is-clearing");
             await cricketFinishDismissal();
@@ -5093,19 +5121,20 @@
 
         cricketClearBatterSwing();
         setDuckFace(cricketLincoln, "neutral");
-        cricketRecordSix();
-        await sleep(650);
-        if (cricketLegalBalls % 6 === 0) cricketBeginNextOver();
+        const message = cricketRecordSix();
+        const overComplete = cricketLegalBalls % 6 === 0;
+        // Let Lincoln finish the sixth-ball sledge before the selection prompt.
+        await sleep(overComplete ? CRICKET_SPEECH_MS : 650);
+        if (overComplete) cricketBeginNextOver(message);
         else cricketResetBall();
     }
-    function cricketBeginNextOver() {
+    function cricketBeginNextOver(message) {
         cricketState = "selecting-next";
         cricketGameLayer?.classList.remove("is-ready", "is-bowling");
         cricketBallLayer?.classList.remove("is-ready", "is-bowling");
         world?.classList.add("cricket-choose-bowler");
-        // Preserve the sixth-ball sandpaper hint on the scoreboard while
-        // Lincoln gives the persistent next-bowler prompt in the pond.
-        cricketShowInnings("OVER COMPLETE", "SERIOUSLY, TRY SOME SANDPAPER!");
+        // Keep the sixth-ball encouragement visible during bowler selection.
+        cricketShowInnings("OVER COMPLETE", message);
         cricketSpeak("All too easy. NEXT?", true);
         for (const duck of ducks.values()) {
             duck.classList.toggle("cricket-next-eligible", duck !== cricketBowler && duck.dataset.playerId !== CRICKET_LINCOLN_PLAYER_ID);
@@ -5292,7 +5321,8 @@
     async function cricketArrangeField(bowler) {
         cricketState="setting";
         cricketRuns=0;
-        cricketSledgePool = [];
+        cricketMessagePools = {};
+        cricketLastMessages = {};
         cricketWickets=0;
         cricketLegalBalls=0;
         cricketWides=0;
