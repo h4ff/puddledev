@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.32
+# Duck Pond — v1.2-dev.33
 
 ## v1.0.3 – Smart TV stability
 
@@ -321,3 +321,9 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Ten shuffled random sledges for balls 1/3/5; fixed help/sandpaper prompts for 2/4/6; Lincoln speaks after shots. Cricket scoreboard lettering enlarged.
 - Batting artwork, pavilion exit and ball/stump impact layering unchanged.
 - Both JS and CSS cache references updated.
+
+## v1.2-dev.33
+- Separate scoreboard encouragement and Lincoln's mocking reactions. Scoreboard legal balls 1/4/6 use random encouragement; ball 2 asks if the bowler needs help; balls 3/5 give escalating sandpaper hints. Wides display WIDE without advancing the legal-ball sequence.
+- Lincoln has independent shuffled six, wide and bowled speech pools; no immediate repeats. Wicket shows GOT HIM! on the scoreboard and Lincoln reacts before the existing pavilion exit.
+- The sixth-ball sledge is shown before the persistent “All too easy. NEXT?” prompt; existing fielder/bowler swap, running score and sandpaper unlock after four legal balls remain unchanged.
+- No changes to delivery trajectories, bat/wing artwork, pavilion exit, stylesheet or assets. Ball/stump impact layering remains in the backlog.
