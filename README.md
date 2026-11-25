@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.31
+# Duck Pond — v1.2-dev.32
 
 ## v1.0.3 – Smart TV stability
 
@@ -314,3 +314,10 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Fixed Lincoln pavilion stair layering by overriding the existing `cricket-batter` `z-index: 2250 !important` rule during walk-off.
 - Lincoln is now explicitly above `Verandah.png` while climbing the stairs, then switches behind it at the existing top-of-stairs waypoint.
 - No rear-wing changes in this build.
+
+## v1.2-dev.32
+- Wides travel past the batting line and land roughly one-quarter of the way toward the water boundary with a small splash before the ball resets. Extreme aim is bounded to water on the chosen side.
+- Six legal balls complete an over; Lincoln prompts “All too easy. NEXT?” and the selected fielder swaps places with the previous bowler. Running score and sandpaper clue progress are retained; wides do not count toward the six balls. A one-bowler test pond can reuse its bowler.
+- Ten shuffled random sledges for balls 1/3/5; fixed help/sandpaper prompts for 2/4/6; Lincoln speaks after shots. Cricket scoreboard lettering enlarged.
+- Batting artwork, pavilion exit and ball/stump impact layering unchanged.
+- Both JS and CSS cache references updated.
