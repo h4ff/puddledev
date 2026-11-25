@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.30
+# Duck Pond — v1.2-dev.31
 
 ## v1.0.3 – Smart TV stability
 
@@ -287,6 +287,12 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Removed the dev.25 whole-duck-layer z-index workaround; route, door timing, disappearance and other cricket behaviour are unchanged.
 
 
+
+## v1.2-dev.31
+
+- Vertically inverts the real rear batting wing around its existing grip origin, retaining the horizontal flip, translation, rotation and shoulder animation. Front wing, bat swing and pavilion exit are unchanged.
+- Updates the stylesheet cache reference to dev.31.
+- Ball/stump impact layering remains in the backlog.
 
 ## v1.2-dev.30
 
