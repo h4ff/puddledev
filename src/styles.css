@@ -2402,22 +2402,22 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
 
 /* Cricket scoreboard uses the existing board but makes the taunt dominant. */
 .live-scoreboard[data-mode="cricket"] {
-  grid-template-rows: 9px 24px 1fr;
-  padding: 3px 5px 4px;
+  grid-template-rows: 11px 30px minmax(0, 1fr);
+  padding: 3px 4px 4px;
 }
 .live-scoreboard[data-mode="cricket"] .score-label {
-  font-size: 7px;
-  letter-spacing: .08em;
+  font-size: 9px;
+  letter-spacing: .04em;
 }
 .live-scoreboard[data-mode="cricket"] strong {
-  font-size: 19px;
+  font-size: 30px;
   line-height: .95;
 }
 .live-scoreboard[data-mode="cricket"] .score-secondary {
   align-self: center;
-  font-size: 10.5px;
-  line-height: 1.02;
-  letter-spacing: .025em;
+  font-size: 12.5px;
+  line-height: 1.08;
+  letter-spacing: .01em;
   font-weight: 900;
   white-space: normal;
   overflow: visible;
@@ -2818,4 +2818,52 @@ body.tv-display-mode .cricket-game-button { display: none !important; }
    below it once he reaches the top. */
 .scene-world.cricket-game-running .duck.cricket-batter.cricket-walkoff {
   z-index: 2310 !important;
+}
+
+/* v1.2-dev.32: small splash for wides and Lincoln's batting/over speech. */
+.cricket-wide-splash {
+  width: 44px;
+  height: 44px;
+  z-index: 2240 !important;
+}
+.duck.cricket-speech::before, .duck.cricket-speech::after {
+  position: absolute;
+  background: #fffdf5;
+  pointer-events: none;
+}
+.duck.cricket-speech::before {
+  content: "";
+  left: 61%;
+  top: -13px;
+  width: 14px;
+  height: 14px;
+  border-left: 2px solid rgba(35,57,66,.88);
+  border-bottom: 2px solid rgba(35,57,66,.88);
+  transform: rotate(-38deg);
+  z-index: 30;
+}
+.duck.cricket-speech::after {
+  content: attr(data-cricket-speech);
+  left: 60%;
+  bottom: calc(100% + 14px);
+  width: max-content;
+  max-width: 190px;
+  min-width: 90px;
+  padding: 7px 10px;
+  border: 2px solid rgba(35,57,66,.88);
+  border-radius: 13px;
+  color: #233942;
+  font: 800 13px/1.1 system-ui, sans-serif;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+  box-shadow: 0 3px 8px rgba(24,39,44,.18);
+  z-index: 31;
+}
+.scene-world.cricket-game-running.cricket-choose-bowler .duck:not(.cricket-next-eligible) {
+  filter: none;
+  cursor: default;
+}
+.scene-world.cricket-game-running.cricket-choose-bowler .duck.cricket-next-eligible {
+  cursor: pointer;
 }

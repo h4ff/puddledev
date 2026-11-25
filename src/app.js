@@ -560,8 +560,8 @@
         if (!liveScoreboard || !scoreboardPrimary)
             return;
         const entrant = scoreboardMode === "entrant";
-        const maxSize = entrant ? 20 : 27;
-        const minSize = entrant ? 10 : 20;
+        const maxSize = entrant ? 20 : scoreboardMode === "cricket" ? 32 : 27;
+        const minSize = entrant ? 10 : scoreboardMode === "cricket" ? 15 : 20;
         scoreboardPrimary.style.fontSize = `${maxSize}px`;
         scoreboardPrimary.style.lineHeight = entrant ? "1.02" : "1.05";
         // Measure in the unscaled world DOM and progressively reduce only when
@@ -2176,10 +2176,10 @@
         }
         return current;
     }
-    async function createSplashAnimation(xPct, yPct, duckType = "standard") {
+    async function createSplashAnimation(xPct, yPct, duckType = "standard", smallBallSplash = false) {
         playSplashSound(xPct, duckType);
         const splash = document.createElement("div");
-        splash.className = "splash-sprite";
+        splash.className = smallBallSplash ? "splash-sprite cricket-wide-splash" : "splash-sprite";
         const image = document.createElement("img");
         image.alt = "";
         splash.appendChild(image);
@@ -4582,6 +4582,33 @@
     let cricketBallDrag = null;
     let cricketRubDistance = 0;
     let cricketChallengeReady = false;
+    let cricketSpeechTimer = null;
+    const CRICKET_RANDOM_SLEDGES = [
+        "THAT'S GONE!", "TOO EASY!", "IS THAT ALL YOU'VE GOT?",
+        "CHECK THE BOUNDARY!", "I COULD DO THIS ALL DAY!",
+        "NICE WARM-UP BALL!", "BOWL IT AGAIN!", "DON'T BOTHER CHASING THAT!",
+        "WHERE'S THE REAL BOWLER?", "THANKS FOR COMING!"
+    ];
+    let cricketSledgePool = [];
+
+    function cricketRandomSledge() {
+        if (!cricketSledgePool.length) cricketSledgePool = CRICKET_RANDOM_SLEDGES.slice();
+        return cricketSledgePool.splice(Math.floor(Math.random() * cricketSledgePool.length), 1)[0];
+    }
+    function cricketClearSpeech() {
+        clearTimeout(cricketSpeechTimer);
+        cricketSpeechTimer = null;
+        cricketLincoln?.classList.remove("cricket-speech", "cricket-next-bowler");
+        if (cricketLincoln) delete cricketLincoln.dataset.cricketSpeech;
+    }
+    function cricketSpeak(message, persistent = false) {
+        cricketClearSpeech();
+        if (!cricketLincoln?.isConnected) return;
+        cricketLincoln.dataset.cricketSpeech = message;
+        cricketLincoln.classList.add("cricket-speech");
+        if (persistent) cricketLincoln.classList.add("cricket-next-bowler");
+        else cricketSpeechTimer = setTimeout(cricketClearSpeech, 2100);
+    }
 
     function cricketLincolnPondDuck() {
         return [...ducks.values()].find(duck => duck.dataset.playerId === CRICKET_LINCOLN_PLAYER_ID) || null;
@@ -4703,15 +4730,28 @@
         const strikeX = releasePoint.x + dx * tStrike;
         const legal = Number.isFinite(strikeX) && tStrike > 0 && strikeX >= 50.5 && strikeX <= 57.5;
 
-        // Extend the same straight release vector until it first leaves the world.
-        const candidates = [];
-        if (dy < -.001) candidates.push((-8 - releasePoint.y) / dy);
-        if (dx < -.001) candidates.push((-8 - releasePoint.x) / dx);
-        if (dx > .001) candidates.push((108 - releasePoint.x) / dx);
-        const valid = candidates.filter(t => Number.isFinite(t) && t > 0);
-        const tExit = valid.length ? Math.min(...valid) : Math.max(1, tStrike + 2);
-        const exit = { x: releasePoint.x + dx * tExit, y: releasePoint.y + dy * tExit };
-        return { dx, dy, strikeX, strikeY, tStrike, legal, exit };
+        return { dx, dy, strikeX, strikeY, tStrike, legal };
+    }
+    function cricketWideWaterPath(line) {
+        // Ordinary wides retain their actual slingshot line. For extreme pulls
+        // which would already be off the pond at the batting crease, limit the
+        // visual line to the water on the same side of Lincoln.
+        const strikeX = Math.max(20, Math.min(85, line.strikeX));
+        const pass = { x: strikeX, y: line.strikeY };
+        const dx = pass.x - CRICKET_BALL_READY_POS.x;
+        const dy = pass.y - CRICKET_BALL_READY_POS.y;
+        const length = Math.hypot(dx, dy);
+        const ux = dx / length, uy = dy / length;
+        // Walk the existing water mask in the direction of travel, then land
+        // one quarter of the way from the batting line to the water boundary.
+        let distanceToEdge = 0;
+        for (let d = .1; d <= 100; d += .1) {
+            if (!inWater(pass.x + ux*d, pass.y + uy*d)) break;
+            distanceToEdge = d;
+        }
+        const travel = distanceToEdge * .25;
+        const landing = { x: pass.x + ux*travel, y: pass.y + uy*travel };
+        return { pass, landing, adjusted: strikeX !== line.strikeX };
     }
     function cricketAnimateStraightBall(start, end, duration, trackWing = true) {
         return new Promise(resolve => {
@@ -4875,16 +4915,13 @@
         cricketRuns += 6;
         cricketLegalBalls += 1;
         cricketClueActive = cricketLegalBalls >= 4;
-        const taunts = [
-            "THAT'S GONE.",
-            "TOO EASY.",
-            "BOWL SOMEWHERE ELSE?",
-            "NEED SOME SANDPAPER?",
-            "HE'S WAITING FOR IT.",
-            "SANDPAPER. JUST SAYING."
-        ];
-        const message = taunts[Math.min(taunts.length - 1, Math.max(0, cricketLegalBalls - 1))];
+        const ballInOver = (cricketLegalBalls - 1) % 6 + 1;
+        const message = ballInOver === 2 ? "NEED SOME HELP?"
+            : ballInOver === 4 ? "NEED SOME SANDPAPER?"
+            : ballInOver === 6 ? "SERIOUSLY, TRY SOME SANDPAPER!"
+            : cricketRandomSledge();
         cricketShowInnings("LINCOLN: SIX", message);
+        if (ballInOver !== 6) cricketSpeak(message);
     }
     function cricketRecordWide() {
         cricketRuns += 1;
@@ -4948,6 +4985,7 @@
         if (cricketState !== "ready" || !cricketBowler || !cricketLincoln || !releasePoint)
             return;
         cricketState = "bowling";
+        cricketClearSpeech();
         cricketGameLayer?.classList.remove("is-ready");
         cricketGameLayer?.classList.add("is-bowling");
         cricketBallLayer?.classList.remove("is-ready");
@@ -4974,12 +5012,21 @@
 
         const line = cricketReleaseLine(releasePoint);
         if (!line.legal) {
-            const distance = Math.hypot(line.exit.x - releasePoint.x, line.exit.y - releasePoint.y);
-            await cricketAnimateStraightBall(releasePoint, line.exit, Math.max(520, Math.min(1050, distance * 15)), true);
+            const { landing, adjusted } = cricketWideWaterPath(line);
+            // Normal wides follow the actual delivery ray. Extreme pulls are
+            // redirected at the ready point to keep their splash in the pond.
+            if (adjusted) {
+                await cricketAnimateStraightBall(releasePoint, CRICKET_BALL_READY_POS, 280, true);
+            }
+            const start = adjusted ? CRICKET_BALL_READY_POS : releasePoint;
+            const distance = Math.hypot(landing.x - start.x, landing.y - start.y);
+            await cricketAnimateStraightBall(start, landing, Math.max(520, Math.min(1100, distance * 24)), true);
             cricketRecordWide();
             cricketBowler?.classList.remove("cricket-wing-tracking");
             cricketBowler?.style.removeProperty("--cricket-wing-angle");
-            await sleep(520);
+            cricketBallLayer?.classList.add("is-clearing");
+            await createSplashAnimation(landing.x, landing.y, "standard", true);
+            await sleep(180);
             cricketResetBall();
             return;
         }
@@ -5048,7 +5095,53 @@
         setDuckFace(cricketLincoln, "neutral");
         cricketRecordSix();
         await sleep(650);
+        if (cricketLegalBalls % 6 === 0) cricketBeginNextOver();
+        else cricketResetBall();
+    }
+    function cricketBeginNextOver() {
+        cricketState = "selecting-next";
+        cricketGameLayer?.classList.remove("is-ready", "is-bowling");
+        cricketBallLayer?.classList.remove("is-ready", "is-bowling");
+        world?.classList.add("cricket-choose-bowler");
+        // Preserve the sixth-ball sandpaper hint on the scoreboard while
+        // Lincoln gives the persistent next-bowler prompt in the pond.
+        cricketShowInnings("OVER COMPLETE", "SERIOUSLY, TRY SOME SANDPAPER!");
+        cricketSpeak("All too easy. NEXT?", true);
+        for (const duck of ducks.values()) {
+            duck.classList.toggle("cricket-next-eligible", duck !== cricketBowler && duck.dataset.playerId !== CRICKET_LINCOLN_PLAYER_ID);
+        }
+        // A tiny test pond can contain only one eligible bowler. Allow that
+        // bowler to bowl again rather than leaving the game locked forever.
+        if (![...ducks.values()].some(d => d.classList.contains("cricket-next-eligible"))) {
+            cricketBowler?.classList.add("cricket-next-eligible");
+        }
+    }
+    async function cricketSwapBowler(next) {
+        if (cricketState !== "selecting-next" || !next?.classList.contains("cricket-next-eligible")) return;
+        cricketState = "setting";
+        cricketClearSpeech();
+        world?.classList.remove("cricket-choose-bowler");
+        for (const duck of ducks.values()) duck.classList.remove("cricket-next-eligible");
+        const previous = cricketBowler;
+        const fieldPosition = cricketCurrentPoint(next);
+        const bowlerName = String(next.dataset.playerName || "BOWLER").toUpperCase();
+        cricketShowInnings("CHANGING BOWLERS", `${bowlerName} HAS THE BALL`);
+        if (previous !== next) {
+            previous.classList.remove("cricket-selected", "cricket-bowler", "cricket-wing-tracking", "cricket-wing-release");
+            previous._lastDepthZ = null;
+            setDepth(previous, cricketCurrentPoint(previous).y);
+            await Promise.all([
+                cricketMoveDuck(previous, fieldPosition, 2200),
+                cricketMoveDuck(next, CRICKET_BOWLER_POS, 2200)
+            ]);
+            cricketBowler = next;
+            next.classList.add("cricket-selected", "cricket-bowler");
+            next.style.zIndex = "2250";
+            cricketFaceLincoln(previous);
+            cricketFaceLincoln(next);
+        }
         cricketResetBall();
+        cricketShowInnings(bowlerName, "PULL BACK & RELEASE");
     }
     async function cricketWalkLincolnOff() {
         if (!cricketLincoln?.isConnected)
@@ -5142,6 +5235,7 @@
     }
     async function cricketFinishDismissal() {
         cricketState="ending";
+        cricketClearSpeech();
         cricketGameLayer?.classList.remove("is-ready","is-bowling");
         cricketBallLayer?.classList.remove("is-ready","is-bowling");
         cricketClearBatterSwing();
@@ -5198,6 +5292,7 @@
     async function cricketArrangeField(bowler) {
         cricketState="setting";
         cricketRuns=0;
+        cricketSledgePool = [];
         cricketWickets=0;
         cricketLegalBalls=0;
         cricketWides=0;
@@ -5285,6 +5380,11 @@
             return;
         }
 
+        if (cricketState === "selecting-next") {
+            event.preventDefault(); event.stopPropagation();
+            if (duck.classList.contains("cricket-next-eligible")) void cricketSwapBowler(duck);
+            return;
+        }
         if (cricketState!=="selecting") return;
         event.preventDefault(); event.stopPropagation();
         if (duck.dataset.playerId===CRICKET_LINCOLN_PLAYER_ID) {
