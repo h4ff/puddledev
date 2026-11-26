@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'; worker-src 'none';">
-  <title>Taipans Duck Pond — v1.2-dev.37</title>
-  <link rel="stylesheet" href="src/styles.css?v=1.2-dev.34">
+  <title>Taipans Duck Pond — v1.2-dev.38</title>
+  <link rel="stylesheet" href="src/styles.css?v=1.2-dev.38">
 </head>
 <body>
   <main class="app-shell production-shell">
@@ -84,6 +84,11 @@
         </div>
       </div>
 
+
+      <div id="cricketLandscapeNotice" class="cricket-landscape-notice" hidden role="status" aria-live="polite">
+        <span><strong>Better in landscape!</strong> Turn your phone sideways for the best cricket experience.</span>
+        <button id="closeCricketLandscapeNotice" type="button" aria-label="Dismiss landscape suggestion">×</button>
+      </div>
 
       <div id="loadingOverlay" class="loading-overlay" role="status" aria-live="polite" aria-label="Loading pond assets">
         <div class="loading-card">

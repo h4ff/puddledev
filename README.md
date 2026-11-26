@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.37
+# Duck Pond — v1.2-dev.38
 
 ## v1.0.3 – Smart TV stability
 
@@ -349,3 +349,9 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Trims leading silence on the impact and female grunt, shortens/fades the cheer, and peak-level balances the clips. The complete appeal is retained. Uses local PCM WAVs and versioned audio URLs to bypass cached placeholder samples.
 - All dev.36 sound triggers and end-of-over PICK NEXT BOWLER prompt retained. No gameplay, CSS or artwork changes.
 - Third-party sound reuse rights have not been verified; confirm licensing before public deployment.
+
+
+## v1.2-dev.38 — Mobile cricket landscape suggestion
+- Shows a readable, dismissible landscape suggestion when Lincoln launches cricket in mobile portrait mode. It is outside the scaled world, disappears after rotation or dismissal, and never locks orientation or blocks portrait gameplay.
+- Desktop and existing landscape play remain unchanged. No gameplay, sound, animation, data or asset changes.
+- Final development candidate before production promotion, pending mobile confirmation and third-party audio licence verification.
