@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.36
+# Duck Pond — v1.2-dev.37
 
 ## v1.0.3 – Smart TV stability
 
@@ -343,3 +343,9 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Scoreboard displays PICK NEXT BOWLER and preserves cumulative score/overs after six legal balls. Existing bowler swap is unchanged.
 - Six original synthesized placeholder WAVs are included under assets/sounds/cricket/. The selected Myinstants downloads were unavailable and the user's recorded appeal was not accessible. Replace these WAVs with properly licensed/approved recordings before the final audio release; do not mistake them for the selected clips.
 - No changes to ball trajectories, outcomes, artwork, CSS or pavilion/wing animations.
+
+## v1.2-dev.37 — Supplied cricket audio
+- Replaces all six temporary cricket WAVs with the supplied recordings: cricket-bat-hitting-sound.mp3, wood-pipe-falling.mp3 (bails), mario-ugh.mp3, ff-female-ahh.mp3, cheering.mp3 and the user-recorded howzat.mp3.
+- Trims leading silence on the impact and female grunt, shortens/fades the cheer, and peak-level balances the clips. The complete appeal is retained. Uses local PCM WAVs and versioned audio URLs to bypass cached placeholder samples.
+- All dev.36 sound triggers and end-of-over PICK NEXT BOWLER prompt retained. No gameplay, CSS or artwork changes.
+- Third-party sound reuse rights have not been verified; confirm licensing before public deployment.

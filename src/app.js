@@ -1386,12 +1386,12 @@
         fightClashA: "assets/sounds/lightsaber-clash-02.wav",
         fightClashB: "assets/sounds/lightsaber-clash-04.wav",
         fightOff: "assets/sounds/lightsaber-off.wav",
-        cricketBat: "assets/sounds/cricket/bat-hit.wav",
-        cricketStumps: "assets/sounds/cricket/stumps.wav",
-        cricketGruntMale: "assets/sounds/cricket/grunt-male.wav",
-        cricketGruntFemale: "assets/sounds/cricket/grunt-female.wav",
-        cricketCheer: "assets/sounds/cricket/six-cheer.wav",
-        cricketAppeal: "assets/sounds/cricket/howzat.wav"
+        cricketBat: "assets/sounds/cricket/bat-hit.wav?v=1.2-dev.37",
+        cricketStumps: "assets/sounds/cricket/stumps.wav?v=1.2-dev.37",
+        cricketGruntMale: "assets/sounds/cricket/grunt-male.wav?v=1.2-dev.37",
+        cricketGruntFemale: "assets/sounds/cricket/grunt-female.wav?v=1.2-dev.37",
+        cricketCheer: "assets/sounds/cricket/six-cheer.wav?v=1.2-dev.37",
+        cricketAppeal: "assets/sounds/cricket/howzat.wav?v=1.2-dev.37"
     };
     const pondSampleBytes = new Map();
     const pondSampleBuffers = new Map();
