@@ -1385,7 +1385,13 @@
         fightIgnite: "assets/sounds/lightsaber_02.wav",
         fightClashA: "assets/sounds/lightsaber-clash-02.wav",
         fightClashB: "assets/sounds/lightsaber-clash-04.wav",
-        fightOff: "assets/sounds/lightsaber-off.wav"
+        fightOff: "assets/sounds/lightsaber-off.wav",
+        cricketBat: "assets/sounds/cricket/bat-hit.wav",
+        cricketStumps: "assets/sounds/cricket/stumps.wav",
+        cricketGruntMale: "assets/sounds/cricket/grunt-male.wav",
+        cricketGruntFemale: "assets/sounds/cricket/grunt-female.wav",
+        cricketCheer: "assets/sounds/cricket/six-cheer.wav",
+        cricketAppeal: "assets/sounds/cricket/howzat.wav"
     };
     const pondSampleBytes = new Map();
     const pondSampleBuffers = new Map();
@@ -5018,6 +5024,11 @@
         cricketLincoln.style.removeProperty('--cricket-bat-contact-angle');
         cricketLincoln.style.removeProperty('--cricket-bat-follow-angle');
     }
+    // Cricket samples use the pond audio mixer and its mobile unlock path.
+    function cricketPlaySound(key, x, level = 0.8, delay = 0, vary = false) {
+        void playPondSample(key, {pan: soundPanFromX(x), level, delay,
+            rate: vary ? 0.94 + Math.random() * 0.12 : 1});
+    }
     async function cricketBowl(releasePoint) {
         if (cricketState !== "ready" || !cricketBowler || !cricketLincoln || !releasePoint)
             return;
@@ -5029,6 +5040,10 @@
         cricketBallLayer?.classList.add("is-active","is-bowling");
         cricketSetBallPosition(releasePoint.x, releasePoint.y);
         cricketTrackBowlerWingWorld(releasePoint.x, releasePoint.y);
+        if (Math.random() < 0.30) {
+            const effort = cricketBowler.dataset.presentation === "female" ? "cricketGruntFemale" : "cricketGruntMale";
+            cricketPlaySound(effort, cricketCurrentPoint(cricketBowler).x, 0.64, 0, true);
+        }
 
         if (cricketBallScuffed) {
             cricketShowInnings("SCUFFED", "WHAT IS THAT DOING?");
@@ -5036,6 +5051,9 @@
             cricketLegalBalls += 1;
             cricketWickets += 1;
             cricketStumps?.classList.add("is-bowled");
+            cricketPlaySound("cricketStumps", 54, 0.95, 0, true);
+            cricketPlaySound("cricketAppeal", 50, 0.82, 0.16);
+            cricketPlaySound("cricketCheer", 50, 0.55, 0.42);
             setDuckFace(cricketLincoln, "sad");
             cricketBowler?.classList.remove("cricket-wing-tracking");
             cricketBowler?.style.removeProperty("--cricket-wing-angle");
@@ -5082,6 +5100,8 @@
         setDuckFace(cricketLincoln, "maniacal");
         cricketStartBatterSwing(contact.x);
         await deliveryPromise;
+        cricketPlaySound("cricketBat", contact.x, 0.95, 0, true);
+        cricketPlaySound("cricketCheer", 50, 0.72, 0.28);
 
         // The bowler's arm has followed the delivery all the way to Lincoln.
         // The instant Lincoln makes contact, the wing returns to its normal pose.
@@ -5143,8 +5163,8 @@
         cricketGameLayer?.classList.remove("is-ready", "is-bowling");
         cricketBallLayer?.classList.remove("is-ready", "is-bowling");
         world?.classList.add("cricket-choose-bowler");
-        // Keep the sixth-ball encouragement visible during bowler selection.
-        cricketShowInnings("OVER COMPLETE", message);
+        // Retain the cumulative score and overs while explicitly prompting the next selection.
+        cricketScore("OVER COMPLETE", "PICK NEXT BOWLER", `${cricketOverText()} • ${cricketScoreText()}`);
         cricketSpeak("All too easy. NEXT?", true);
         for (const duck of ducks.values()) {
             duck.classList.toggle("cricket-next-eligible", duck !== cricketBowler && duck.dataset.playerId !== CRICKET_LINCOLN_PLAYER_ID);
