@@ -1,4 +1,4 @@
-# Duck Pond — v1.2-dev.35
+# Duck Pond — v1.2-dev.36
 
 ## v1.0.3 – Smart TV stability
 
@@ -337,3 +337,9 @@ DEV ONLY. Adds the first playable Lincoln bowling Easter egg: “Bowler’s name
 - Uses the supplied transparent 100×100 new and scuffed cricket ball PNGs. The visible artwork is scaled to match the existing 24px/28px ball, retaining perspective scaling and the enlarged invisible touch target. Both images are preloaded.
 - On a scuffed wicket delivery, the ball layer drops below Lincoln on its final approach while staying above the pitch and stumps. Restores normal depth on reset and dismissal cleanup. Existing ball paths, wicket timing, splash, score, batting wings and pavilion exit remain unchanged.
 - Addresses the wicket ball layering backlog; requires visual confirmation on the pond.
+
+## v1.2-dev.36 — Cricket audio integration (temporary samples)
+- Bat impact at contact, crowd applause/cheer after sixes, 30% chance of a presentation-matched bowling grunt, stump impact and staggered appeal/cheer on dismissal. Uses existing pond sound mixer; wide splash unchanged.
+- Scoreboard displays PICK NEXT BOWLER and preserves cumulative score/overs after six legal balls. Existing bowler swap is unchanged.
+- Six original synthesized placeholder WAVs are included under assets/sounds/cricket/. The selected Myinstants downloads were unavailable and the user's recorded appeal was not accessible. Replace these WAVs with properly licensed/approved recordings before the final audio release; do not mistake them for the selected clips.
+- No changes to ball trajectories, outcomes, artwork, CSS or pavilion/wing animations.
