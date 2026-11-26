@@ -82,6 +82,8 @@
     const mobilePondToggle = document.getElementById("mobilePondToggle");
     const mobileZoomReset = document.getElementById("mobileZoomReset");
     const cricketGameButton = document.getElementById("cricketGameButton");
+    const cricketLandscapeNotice = document.getElementById("cricketLandscapeNotice");
+    const closeCricketLandscapeNotice = document.getElementById("closeCricketLandscapeNotice");
     const cricketGameLayer = document.getElementById("cricketGameLayer");
     const cricketBallLayer = document.getElementById("cricketBallLayer");
     const cricketPitch = document.getElementById("cricketPitch");
@@ -5294,6 +5296,7 @@
     }
     async function cricketFinishDismissal() {
         cricketState="ending";
+        hideCricketLandscapeNotice();
         cricketClearSpeech();
         cricketGameLayer?.classList.remove("is-ready","is-bowling");
         cricketBallLayer?.classList.remove("is-ready","is-bowling");
@@ -5420,9 +5423,23 @@
             cricketBallLayer.classList.remove("cricket-prewarm");
         });
     }
+    // Advisory only: never lock orientation or prevent portrait play.
+    function hideCricketLandscapeNotice() {
+        if (cricketLandscapeNotice) cricketLandscapeNotice.hidden = true;
+    }
+    function showCricketLandscapeNotice() {
+        if (cricketLandscapeNotice) cricketLandscapeNotice.hidden = !portraitMobileMode();
+    }
+    function updateCricketLandscapeNotice() {
+        if (!portraitMobileMode()) hideCricketLandscapeNotice();
+    }
+    if (closeCricketLandscapeNotice) {
+        closeCricketLandscapeNotice.addEventListener("click", hideCricketLandscapeNotice);
+    }
     function cricketBeginSelection() {
         if (TV_DISPLAY_BROWSER || cricketState!=="idle" || !ducks.size) return;
         cricketState="selecting";
+        showCricketLandscapeNotice();
         cricketRefreshChallengeTrigger();
         world?.classList.add("cricket-choose-bowler");
         cricketScore("BOWLER'S NAME?", "CHOOSE BOWLER", "CLICK A DUCK IN THE POND");
@@ -5729,6 +5746,7 @@
         duck.remove();
     }
     function resetPond() {
+        hideCricketLandscapeNotice();
         dateRangeLoadToken++;
         disableSnakeEvent();
         disableRandomFights();
@@ -6101,6 +6119,7 @@
     let orientationTimer = null;
     let lastLayoutWidth = document.documentElement.clientWidth;
     function handleViewportChange(force = false) {
+        updateCricketLandscapeNotice();
         // Only layout-width changes are allowed to rescale the world. Safari's
         // visualViewport resize stream is intentionally ignored: browser chrome
         // motion and native pinch can emit dozens of events while the page layout
